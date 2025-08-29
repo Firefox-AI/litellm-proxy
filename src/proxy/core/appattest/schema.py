@@ -12,6 +12,7 @@ class AttestationRequestV2(BaseModel):
     device_id: str
 
 class AssertionRequestV2(BaseModel):
+    user_id: str
     key_id: str
     assertion: str
     payload: dict

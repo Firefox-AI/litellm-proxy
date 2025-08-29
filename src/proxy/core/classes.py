@@ -7,7 +7,7 @@ import time
 
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 class MessagesPayload(BaseModel):
-	messages: List[Dict[str, Any]] = []
+	payload: Dict[str, Any] = {}
 
 class UserUpdatePayload(BaseModel):
 	user_id: str

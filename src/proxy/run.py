@@ -2,12 +2,13 @@
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Header
 import httpx
-from typing import Annotated
+from typing import Annotated, Optional
 import asyncpg
 from .core.classes import MessagesPayload, UserUpdatePayload, Timer
 from .core.fxa import get_fxa_user_id
-from .core.appattest import get_current_session, appattest_router
-from .core.appattest.config import settings
+from .core.appattest import appattest_router, verify_assert_v2
+from .core.appattest.config import settings, llm_config
+from .core.appattest.schema import AssertionRequestV2
 
 LITELLM_VIRTUAL_KEY_URL = f"{settings.LITELLM_API_BASE}/key/generate"
 LITELLM_COMPLETIONS_URL = f"{settings.LITELLM_API_BASE}/v1/chat/completions"
@@ -18,15 +19,17 @@ LITELLM_HEADERS = {
 METRICS_LOG_FILE = "metrics.jsonl"
 
 
-def get_optional_app_attest_session(proxy_auth: str = Header(...)):
+def get_app_attest(request: AssertionRequestV2):
 	try:
-		session = get_current_session(proxy_auth)
-		return session
+		verify_assert_v2(request.key_id, request.assertion, request.payload)
+		return {"user_id": request.user_id}
 	except HTTPException:
-		return None
+		raise HTTPException(status_code=401, detail={"error": "Invalid App Attest session."})
+	except Exception as e:
+		raise HTTPException(status_code=500, detail={"error": str(e)})
 
 
-def get_optional_fxa_user_id(proxy_auth: str = Header(...)):
+def get_fxa(proxy_auth: str = Header(...)):
 	try:
 		user_id = get_fxa_user_id(proxy_auth)
 		return user_id
@@ -35,8 +38,8 @@ def get_optional_fxa_user_id(proxy_auth: str = Header(...)):
 
 
 async def get_user_id_from_either(
-	app_attest_session: Annotated[dict, Depends(get_optional_app_attest_session)],
-	fxa_user_id: Annotated[str, Depends(get_optional_fxa_user_id)]
+	app_attest_session: Annotated[dict, Depends(get_app_attest)],
+	fxa_user_id: Annotated[str, Depends(get_fxa)]
 ):
 	timer = Timer()
 	timer.start()
@@ -62,8 +65,8 @@ app = FastAPI(
 # - POST /verify/attest_v2
 app.include_router(appattest_router, prefix="/verify")
 
-async def completion(messages, end_user_id: str):
-	body = {"model": "vertex_ai/mistral-small-2503", "messages": messages, "user": end_user_id}
+async def completion(text, end_user_id: str):
+	body = {"model": llm_config["model_name"], "messages": [{"role": "user", "content": text}], "user": end_user_id}
 	try:
 		async with httpx.AsyncClient() as client:
 			response = await client.post(LITELLM_COMPLETIONS_URL, headers=LITELLM_HEADERS, json=body, timeout=10)
@@ -77,8 +80,8 @@ async def completion(messages, end_user_id: str):
 
 @app.post("/v1/chat/completions")
 async def proxy_request(
-	chat_request: MessagesPayload,
-	auth_res=Depends(get_user_id_from_either)
+	request: AssertionRequestV2,
+	auth_res: Annotated[Optional[dict], Depends(get_user_id_from_either)] #
 ):
 	user_id, timer = auth_res
 	user, created = await get_or_create_end_user(user_id)
@@ -88,7 +91,7 @@ async def proxy_request(
 			detail={"error": "User is blocked."}
 		)
 	timer.checkpoint("create_user" if created else "get_user")
-	res = await completion(chat_request.messages, user["user_id"])
+	res = await completion(request.payload["text"], user["user_id"])
 	if res.get("error"):
 		timer.checkpoint(res["error"].get("type", "completion_error"))
 	else:

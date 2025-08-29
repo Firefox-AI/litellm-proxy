@@ -3,7 +3,8 @@ from .appattest import (
     verify_attestation_token,
     issue_attested_session_token,
     validate_challenge,
-    get_current_session
+    verify_attest_v2,
+    verify_assert_v2
 )
 from .middleware import router as appattest_router
 
@@ -12,6 +13,7 @@ __all__ = [
     "verify_attestation_token",
     "issue_attested_session_token",
     "validate_challenge",
-    "get_current_session",
+    "verify_attest_v2",
+    "verify_assert_v2",
     "appattest_router",
 ]

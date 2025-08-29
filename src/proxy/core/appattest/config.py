@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-
+import yaml
 
 class Settings(BaseSettings):
     debug: bool = False
@@ -21,3 +21,10 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 settings = Settings()
+
+LLM_CONFIG_PATH = "llm_config.yaml"
+def load_llm_config(path=LLM_CONFIG_PATH):
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+llm_config = load_llm_config()["llm_config"]

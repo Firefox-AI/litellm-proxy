@@ -50,6 +50,18 @@ general_settings:
 
 Service account configured to hit VertexAI: `service_account.json` should be in directory root
 
+### Example `llm_config.yaml`
+```yaml
+llm_config:
+  system_prompt_template: "You are an expert at ..."
+  user_prompt_template: '''Please help me with ...'''
+  model_name: <provider>/<model_name>
+  temperature: 0.1
+  top_p: 0.01
+  max_completion_tokens: null # max tokens for summarization call, set to 0 for None
+  error_on_threshold_fails: false
+```
+
 ### Example request
 ```
 curl --location 'http://localhost:8080/v1/chat/completions' \

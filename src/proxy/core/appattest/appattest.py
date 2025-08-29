@@ -87,17 +87,6 @@ async def verify_attestation_token(token: str, expected_device_id: str, expected
 			raise ve
 	raise ValueError("Failed attestation validation")
 
-# TODO: replace with app attest and fxa logic
-def get_current_session(proxy_auth: str = Header(...)):
-	try:
-		token = proxy_auth.replace("Bearer ", "")
-		payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
-		if not payload.get("user_id"):
-			raise HTTPException(status_code=403, detail="Invalid session type")
-		return payload
-	except JWTError:
-		raise HTTPException(status_code=403, detail="Invalid or expired session token")
-
 async def verify_attest_v2(key_id: str, attestation_obj: str, challenge: str):
 	attest = base64.urlsafe_b64decode(attestation_obj)
 	key_id_bytes = base64.urlsafe_b64decode(key_id)
@@ -153,7 +142,7 @@ async def verify_attest_v2(key_id: str, attestation_obj: str, challenge: str):
 
 	return {"status": "success"}
 
-async def verify_assert_v2(key_id: str, assertion: str, payload: dict):
+def verify_assert_v2(key_id: str, assertion: str, payload: dict):
 	try:
 		key_id_bytes = base64.urlsafe_b64decode(key_id)
 		raw_assertion = base64.urlsafe_b64decode(assertion)
@@ -179,7 +168,7 @@ async def verify_assert_v2(key_id: str, assertion: str, payload: dict):
 	
 	# try:
 	assertion_to_test = Assertion(raw_assertion, expected_hash, public_key_obj, config)
-	result = assertion_to_test.verify()
+	assertion_to_test.verify()
 	# except Exception as e:
 	# 	raise HTTPException(status_code=403, detail=f"Assertion verification failed: {e}")
 
@@ -187,4 +176,4 @@ async def verify_assert_v2(key_id: str, assertion: str, payload: dict):
 	# key_info['sign_count'] = result['sign_count']
 	# key_cache[key_id_bytes] = key_info
 
-	return result
+	return {"status": "success"}

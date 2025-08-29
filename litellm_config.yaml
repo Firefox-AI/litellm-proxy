@@ -1,9 +1,9 @@
 model_list:
-  - model_name: vertex_ai/mistral-small-2503
+  - model_name: <provider>/<model_name>
     litellm_params:
-      model: vertex_ai/mistral-small-2503
-      vertex_project: "fx-gen-ai-sandbox"
-      vertex_location: "us-central1"
+      model: <provider>/<model_name>
+      vertex_project: <gcp_project_name>
+      vertex_location: <gcp_region>
       vertex_credentials: "/app/service_account.json"
 
 general_settings:
