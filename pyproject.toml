@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "litellm-proxy"
+version = "0.1.0"
+description = "A proxy to verify App Attest/FxA payloads and proxy requests using LiteLLM virtual keys."
+authors = [
+    { name="Noah Podgurski", email="npodgurski@mozilla.com" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/firefox-ai/litellm-proxy"
+Issues = "https://github.com/firefox-ai/litellm-proxy/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+litellm-proxy = "proxy.run:main"

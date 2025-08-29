@@ -1,0 +1,7 @@
+.env**
+.venv/
+**/*/__pycache__/
+**/*/*.egg-info
+.DS_Store
+metrics.jsonl
+service_account.json

@@ -1,0 +1,67 @@
+# LiteLLM Proxy
+
+A proxy to verify App Attest/FxA payloads and proxy requests through LiteLLM to enact budgets and per user management.
+
+## Setup
+
+```bash
+make setup
+```
+
+This creates a virtual environment in `.venv/`, installs dependencies, and installs the tool locally in editable mode.
+
+### Running LiteLLM Proxy locally with Docker
+```bash
+docker run --platform linux/amd64 --name litellm -v $(pwd)/litellm_config.yaml:/app/config.yaml -v $(pwd)/service_account.json:/app/service_account.json -p 4000:4000 ghcr.io/berriai/litellm:main-latest --config /app/config.yaml
+```
+
+## Config (see [LiteLLM Documentation](https://docs.litellm.ai/docs/simple_proxy_old_doc) for more config options)
+`.env.config`
+```
+```
+`.env` (for app attest package)
+```
+APPLE_PUBLIC_KEYS_URL="https://apple-public-keys-url"
+CHALLENGE_EXPIRY_SECONDS="300"
+JWT_SECRET="a-secret-that-doesnt-have-the-word-secret-in-it"
+JWT_EXPIRY_SECONDS="1800"
+
+MASTER_KEY="sk-1234..."
+LITELLM_API_BASE="http://litellm.proxy:4000"
+
+DATABASE_URL=postgresql://...
+
+APP_BUNDLE_ID="org.example.app"
+APP_DEVELOPMENT_TEAM="12BC943KDC"
+```
+
+### Example `litellm_config.yaml`
+```yaml
+model_list:
+  - model_name: <provider>/<model_name>
+    litellm_params:
+      model: <provider>/<model_name>
+      vertex_project: <gcp_project_name>
+      vertex_location: <gcp_region>
+      vertex_credentials: "/app/service_account.json"
+
+general_settings:
+  master_key: "sk-1234..." # match MASTER_KEY in .env
+  database_url: "postgresql://user:password@host.docker.internal:5432/test"
+  litellm_key_header_name: X-Litellm-Key
+```
+
+Service account configured to hit VertexAI: `service_account.json` should be in directory root
+
+### Example request
+```
+curl --location 'http://localhost:8080/v1/chat/completions' \
+--header 'Content-Type: application/json' \
+--header 'proxy-auth: Bearer sk-...' \
+--data '{
+    "messages": [{
+        "role": "user",
+        "content": "Hello!"
+      }],
+}'
+```
