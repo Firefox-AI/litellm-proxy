@@ -1,3 +1,4 @@
+import cbor2
 import json
 import time
 from fastapi import HTTPException, Header
@@ -7,6 +8,7 @@ import binascii
 import os
 import hashlib
 import base64
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from cryptography import x509
 from pyattest.configs.apple import AppleConfig
@@ -111,16 +113,37 @@ async def verify_attest_v2(key_id: str, attestation_obj: str, challenge: str):
 	try:
 		attestation = Attestation(attest, nonce, config)
 		await run_in_threadpool(attestation.verify)
-		verified_public_key = attestation.data["data"]["raw"]["attStmt"]["x5c"][0]
+		
+		# Retrieve verified public key
+		verified_data = attestation.data["data"]
+		credential_id = verified_data["credential_id"]
+		auth_data = verified_data["raw"]["authData"]
+		cred_id_len = len(credential_id)
+		# Offset = 37 bytes (for rpIdHash, flags, counter) + 16 (aaguid) + 2 (len) + cred_id_len
+		public_key_offset = 37 + 16 + 2 + cred_id_len
+		# Slice the authData to get the raw COSE public key
+		cose_public_key_bytes = auth_data[public_key_offset:]
+		# Decode the COSE key and convert it to PEM format.
+		cose_key_obj = cbor2.loads(cose_public_key_bytes)
+		# COSE Key Map for EC2 keys: 1=kty, -1=crv, -2=x, -3=y
+		if cose_key_obj.get(1) != 2 or cose_key_obj.get(-1) != 1: # kty=EC2, crv=P-256
+			raise ValueError("Public key is not a P-256 elliptic curve key.")
+		x_coord = cose_key_obj.get(-2)
+		y_coord = cose_key_obj.get(-3)
+
+		public_key = ec.EllipticCurvePublicNumbers(
+			x=int.from_bytes(x_coord, 'big'),
+			y=int.from_bytes(y_coord, 'big'),
+			curve=ec.SECP256R1()
+		).public_key()
+
+		public_key_pem = public_key.public_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PublicFormat.SubjectPublicKeyInfo
+		).decode('utf-8')
 
 	except Exception as e:
 		raise HTTPException(status_code=403, detail=f"Attestation verification failed: {e}")
-
-	public_key_obj = x509.load_der_x509_certificate(verified_public_key).public_key()
-	public_key_pem = public_key_obj.public_bytes(
-		encoding=serialization.Encoding.PEM,
-		format=serialization.PublicFormat.SubjectPublicKeyInfo
-	)
 	
 	# save_public_key
 	key_cache[key_id_bytes] = {
@@ -137,14 +160,14 @@ async def verify_assert_v2(key_id: str, assertion: str, payload: dict):
 	except Exception:
 		raise HTTPException(status_code=400, detail="Invalid Base64 for keyId or assertion")
 
-	payload_bytes = json.dumps(payload, sort_keys=True, separators=(',', ':')).encode('utf-8')
+	payload_bytes = json.dumps(payload, sort_keys=True, separators=(',', ':')).encode()
 	expected_hash = hashlib.sha256(payload_bytes).digest()
 
 	key_info = key_cache.get(key_id_bytes)
 	if not key_info:
 		raise HTTPException(status_code=403, detail="Key not found for key_id")
 	
-	public_key_pem = key_info["public_key_pem"]
+	public_key_pem = key_info["public_key_pem"].encode()
 	public_key_obj = serialization.load_pem_public_key(public_key_pem)
 	
 	config = AppleConfig(
@@ -154,11 +177,11 @@ async def verify_assert_v2(key_id: str, assertion: str, payload: dict):
 		production=False
 	)
 	
-	try:
-		assertion_to_test = Assertion(raw_assertion, expected_hash, public_key_obj, config)
-		result = assertion_to_test.verify()
-	except Exception as e:
-		raise HTTPException(status_code=403, detail=f"Assertion verification failed: {e}")
+	# try:
+	assertion_to_test = Assertion(raw_assertion, expected_hash, public_key_obj, config)
+	result = assertion_to_test.verify()
+	# except Exception as e:
+	# 	raise HTTPException(status_code=403, detail=f"Assertion verification failed: {e}")
 
 	# should update the sign count here
 	# key_info['sign_count'] = result['sign_count']

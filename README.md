@@ -16,9 +16,6 @@ docker run --platform linux/amd64 --name litellm -v $(pwd)/litellm_config.yaml:/
 ```
 
 ## Config (see [LiteLLM Documentation](https://docs.litellm.ai/docs/simple_proxy_old_doc) for more config options)
-`.env.config`
-```
-```
 `.env` (for app attest package)
 ```
 APPLE_PUBLIC_KEYS_URL="https://apple-public-keys-url"
