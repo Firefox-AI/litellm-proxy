@@ -1,8 +1,12 @@
+asyncpg==0.30.0
+cbor2==5.7.0
+cryptography==45.0.7
 fastapi==0.116.1
 httpx==0.28.1
 pyattest==1.0.2
 pydantic==2.11.7
 pydantic_settings==2.10.1
+PyFxA==0.8.1
 PyJWT==2.10.1
 pyhanko==0.16.0
 python-dotenv==1.1.1

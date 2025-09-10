@@ -1,19 +1,17 @@
 from .appattest import (
     generate_client_challenge,
-    verify_attestation_token,
-    issue_attested_session_token,
+    app_attest_auth,
     validate_challenge,
-    verify_attest_v2,
-    verify_assert_v2
+    verify_attest,
+    verify_assert
 )
 from .middleware import router as appattest_router
 
 __all__ = [
     "generate_client_challenge",
-    "verify_attestation_token",
-    "issue_attested_session_token",
+    "app_attest_auth",
     "validate_challenge",
-    "verify_attest_v2",
-    "verify_assert_v2",
+    "verify_attest",
+    "verify_assert",
     "appattest_router",
 ]

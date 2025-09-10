@@ -16,20 +16,24 @@ docker run --platform linux/amd64 --name litellm -v $(pwd)/litellm_config.yaml:/
 ```
 
 ## Config (see [LiteLLM Documentation](https://docs.litellm.ai/docs/simple_proxy_old_doc) for more config options)
-`.env` (for app attest package)
+`.env` (see `config.py` for all configuration variables)
 ```
-APPLE_PUBLIC_KEYS_URL="https://apple-public-keys-url"
-CHALLENGE_EXPIRY_SECONDS="300"
-JWT_SECRET="a-secret-that-doesnt-have-the-word-secret-in-it"
-JWT_EXPIRY_SECONDS="1800"
-
 MASTER_KEY="sk-1234..."
 LITELLM_API_BASE="http://litellm.proxy:4000"
-
-DATABASE_URL=postgresql://...
+DATABASE_URL=postgresql://... # required for direct user editing in SQL
+CHALLENGE_EXPIRY_SECONDS=300
+PORT=8080
 
 APP_BUNDLE_ID="org.example.app"
 APP_DEVELOPMENT_TEAM="12BC943KDC"
+
+CLIENT_ID="..."
+CLIENT_SECRET="..."
+
+SYSTEM_PROMPT="You are a helpful assistant..."
+MODEL_NAME=""
+TEMPERATURE=0.1
+TOP_P=0.01
 ```
 
 ### Example `litellm_config.yaml`
@@ -50,27 +54,6 @@ general_settings:
 
 Service account configured to hit VertexAI: `service_account.json` should be in directory root
 
-### Example `llm_config.yaml`
-```yaml
-llm_config:
-  system_prompt_template: "You are an expert at ..."
-  user_prompt_template: '''Please help me with ...'''
-  model_name: <provider>/<model_name>
-  temperature: 0.1
-  top_p: 0.01
-  max_completion_tokens: null # max tokens for summarization call, set to 0 for None
-  error_on_threshold_fails: false
-```
+## API Documentation
 
-### Example request
-```
-curl --location 'http://localhost:8080/v1/chat/completions' \
---header 'Content-Type: application/json' \
---header 'proxy-auth: Bearer sk-...' \
---data '{
-    "messages": [{
-        "role": "user",
-        "content": "Hello!"
-      }],
-}'
-```
+After running, Swagger can be viewed at `http://0.0.0.0:<PORT>/api/docs`

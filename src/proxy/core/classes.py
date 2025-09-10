@@ -1,11 +1,12 @@
 from collections import defaultdict
 import json
-import os
-from typing import Any, List, Dict
+from typing import Any, Dict, Optional
 from pydantic import BaseModel
 import time
+from .config import settings
 
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+DEBUG = settings.DEBUG
+
 class MessagesPayload(BaseModel):
 	payload: Dict[str, Any] = {}
 
@@ -45,7 +46,7 @@ class Timer:
 	
 	def log(self):
 		if DEBUG:
-			with open(METRICS_LOG_FILE, "a") as f:
+			with open(settings.METRICS_LOG_FILE, "a") as f:
 				f.write(self.__str__() + "\n")
 			print(self)
 
@@ -57,3 +58,17 @@ class Timer:
 			del self._checkpoints["total"]
 			return json.dumps(results)
 		return ""
+
+class AttestationRequestV2(BaseModel):
+    key_id: str
+    challenge: str
+    attestation_obj: str
+
+class ChatPayload(BaseModel):
+    text: str
+
+class AssertionRequestV2(BaseModel):
+    key_id: Optional[str] = None
+    challenge: Optional[str] = None
+    assertion_obj: Optional[str] = None
+    payload: Optional[ChatPayload] = None
