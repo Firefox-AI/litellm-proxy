@@ -1,13 +1,15 @@
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Header
+from contextlib import asynccontextmanager
 from typing import Annotated, Optional
-from .core.classes import UserUpdatePayload, AssertionRequestV2
+from .core.classes import UserUpdatePayload, AssertionRequest
 from .core.routers.fxa import fxa_auth, fxa_router
 from .core.routers.health import health_router
 from .core.routers.appattest import appattest_router, app_attest_auth
 from .core.config import settings
-from .core.utils import completion, update_user, get_or_create_end_user
+from .core.pg_services.services import app_attest_pg, litellm_pg
+from .core.utils import completion, get_or_create_end_user
 
 tags_metadata = [
 	{
@@ -29,11 +31,11 @@ tags_metadata = [
 ]
 
 async def authorize(
-    request_body: AssertionRequestV2,
+    request_body: AssertionRequest,
     authorization: Annotated[str | None, Header()] = None
 ):
-	if request_body and request_body.key_id and request_body.challenge and request_body.assertion_obj and request_body.payload:
-		data = app_attest_auth(request_body)
+	if request_body and request_body.key_id and request_body.challenge_b64 and request_body.assertion_obj_b64 and request_body.payload:
+		data = await app_attest_auth(request_body)
 		if data:
 			if data.get("error"):
 				raise HTTPException(status_code=400, detail=data["error"])
@@ -50,12 +52,21 @@ async def authorize(
 		detail="Please authenticate with App Attest or FxA."
 	)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+	await litellm_pg.connect()
+	await app_attest_pg.connect()
+	yield
+	await litellm_pg.disconnect()
+	await app_attest_pg.disconnect()
+
 app = FastAPI(
 	title="LiteLLM Proxy",
 	description="A proxy to verify App Attest/FxA payloads and proxy requests through LiteLLM.",
 	version="1.0.0",
 	docs_url="/api/docs",
 	openapi_tags=tags_metadata,
+	lifespan=lifespan
 )
 
 app.include_router(health_router, prefix="/health")
@@ -81,7 +92,7 @@ async def update_user_helper(
 	request: UserUpdatePayload,
 	master_key: str = Header(...)
 ):
-	return await update_user(request, master_key)
+	return await litellm_pg.update_user(request, master_key)
 
 def main():
 	uvicorn.run(app, host="0.0.0.0", port=settings.PORT, timeout_keep_alive=10)

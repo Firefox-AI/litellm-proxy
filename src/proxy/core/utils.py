@@ -1,7 +1,6 @@
+import base64
 from .config import settings
-from .classes import UserUpdatePayload
 import httpx
-import asyncpg
 from fastapi import HTTPException, Header
 
 LITELLM_COMPLETIONS_URL = f"{settings.LITELLM_API_BASE}/v1/chat/completions"
@@ -14,9 +13,9 @@ async def completion(prompt: str, end_user_id: str):
 	body = {
 		"model": settings.MODEL_NAME, 
 		"messages": [
-            {"role": "system", "content": settings.SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
+			{"role": "system", "content": settings.SYSTEM_PROMPT},
+			{"role": "user", "content": prompt},
+		],
 		"temperature": settings.TEMPERATURE,
 		"top_p": settings.TOP_P,
 		"max_tokens": settings.MAX_COMPLETION_TOKENS,
@@ -48,46 +47,9 @@ async def get_or_create_end_user(end_user_id: str):
 		except Exception as e:
 			raise HTTPException(status_code=500, detail={"error": f"Error fetching user info: {e}"})
 
-async def update_user(
-	request: UserUpdatePayload,
-	master_key: str = Header(...)
-):
-	"""
-	Allow updating the user's (End User/Customer)'s information
-	Free tier of LiteLLM does not support this, so updating the DB directly
-	is a workaround.
-	example POST body: {
-		"user_id": "test-user-32",
-		"blocked": false,
-		"budget_id": null,
-		"alias": null
-	}
-	"""
-	if master_key != f"Bearer {settings.MASTER_KEY}":
-		raise HTTPException(status_code=401, detail={"error": "Unauthorized"})
-
-	if not settings.DATABASE_URL:
-		raise ValueError("DATABASE_URL environment variable not set.")
-
-	update_data = request.model_dump(exclude_unset=True)
-	user_id = update_data.pop("user_id", request.user_id) 
-
-	if not update_data:
-		return {"status": "no fields to update", "user_id": user_id}
-
-	conn = await asyncpg.connect(settings.DATABASE_URL)
-	updated_user_record = None
+def b64decode_safe(data_b64: str, obj_name: str="object") -> str:
 	try:
-		set_clause = ", ".join([f'"{key}" = ${i+1}' for i, key in enumerate(update_data.keys())])
-		values = list(update_data.values())
-		where_value_index = len(values) + 1
-		
-		query = f'UPDATE "LiteLLM_EndUserTable" SET {set_clause} WHERE user_id = ${where_value_index} RETURNING *'
-		updated_user_record = await conn.fetchrow(query, *values, user_id)
+		return base64.urlsafe_b64decode(data_b64)
 	except Exception as e:
-		raise HTTPException(status_code=500, detail={"error": f"Error updating user: {e}"})
-
-	if updated_user_record is None:
-		raise HTTPException(status_code=404, detail=f"User with user_id '{user_id}' not found.")
+		raise HTTPException(status_code=400, detail={obj_name: f"Invalid Base64: {e}"})
 	
-	return dict(updated_user_record)
