@@ -1,13 +1,15 @@
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Header
+from contextlib import asynccontextmanager
 from typing import Annotated, Optional
 from .core.classes import UserUpdatePayload, AssertionRequestV2
 from .core.routers.fxa import fxa_auth, fxa_router
 from .core.routers.health import health_router
 from .core.routers.appattest import appattest_router, app_attest_auth
 from .core.config import settings
-from .core.utils import completion, update_user, get_or_create_end_user
+from .core.pg_services.services import key_pg, litellm_pg
+from .core.utils import completion, get_or_create_end_user
 
 tags_metadata = [
 	{
@@ -50,12 +52,21 @@ async def authorize(
 		detail="Please authenticate with App Attest or FxA."
 	)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+	await litellm_pg.connect()
+	await key_pg.connect()
+	yield
+	await litellm_pg.disconnect()
+	await key_pg.disconnect()
+
 app = FastAPI(
 	title="LiteLLM Proxy",
 	description="A proxy to verify App Attest/FxA payloads and proxy requests through LiteLLM.",
 	version="1.0.0",
 	docs_url="/api/docs",
 	openapi_tags=tags_metadata,
+	lifespan=lifespan
 )
 
 app.include_router(health_router, prefix="/health")
@@ -81,7 +92,7 @@ async def update_user_helper(
 	request: UserUpdatePayload,
 	master_key: str = Header(...)
 ):
-	return await update_user(request, master_key)
+	return await litellm_pg.update_user(request, master_key)
 
 def main():
 	uvicorn.run(app, host="0.0.0.0", port=settings.PORT, timeout_keep_alive=10)

@@ -2,7 +2,7 @@ import cbor2
 import json
 import time
 from fastapi import HTTPException
-from ...config import settings
+from fastapi.concurrency import run_in_threadpool
 import binascii
 import os
 import hashlib
@@ -14,7 +14,7 @@ from pyattest.attestation import Attestation
 from pyattest.assertion import Assertion
 from cryptography.x509.base import load_pem_x509_certificate
 from pathlib import Path
-from fastapi.concurrency import run_in_threadpool
+from ...config import settings
 from ...classes import AssertionRequestV2
 
 challenge_store = {}
@@ -38,7 +38,7 @@ def generate_client_challenge(key_id: str) -> str:
 
 def validate_challenge(challenge: str, key_id: str) -> bool:
 	"""Check that the challenge exists, is fresh, and matches key_id"""
-	data = challenge_store.get(challenge)
+	data = challenge_store.get(challenge) #TODO use key_pg
 	if not data:
 		return False
 	if time.time() - data["timestamp"] > settings.CHALLENGE_EXPIRY_SECONDS:
@@ -48,9 +48,6 @@ def validate_challenge(challenge: str, key_id: str) -> bool:
 		return False
 	challenge_store.pop(challenge, None)  # Invalidate challenge to prevent replay
 	return True
-
-async def get_apple_public_keys():
-	return []
 
 async def verify_attest(key_id: str, attestation_obj: str, challenge: str):
 	try:

@@ -1,12 +1,10 @@
-
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from .appattest import (
     generate_client_challenge,
     validate_challenge,
     verify_attest
 )
 from ...classes import AttestationRequestV2
-
 
 router = APIRouter()
 
