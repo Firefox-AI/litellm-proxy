@@ -1,3 +1,4 @@
+import base64
 from .config import settings
 import httpx
 from fastapi import HTTPException, Header
@@ -12,9 +13,9 @@ async def completion(prompt: str, end_user_id: str):
 	body = {
 		"model": settings.MODEL_NAME, 
 		"messages": [
-            {"role": "system", "content": settings.SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
+			{"role": "system", "content": settings.SYSTEM_PROMPT},
+			{"role": "user", "content": prompt},
+		],
 		"temperature": settings.TEMPERATURE,
 		"top_p": settings.TOP_P,
 		"max_tokens": settings.MAX_COMPLETION_TOKENS,
@@ -45,3 +46,9 @@ async def get_or_create_end_user(end_user_id: str):
 			return [end_user, False]
 		except Exception as e:
 			raise HTTPException(status_code=500, detail={"error": f"Error fetching user info: {e}"})
+
+def b64decode_safe(data_b64: str, obj_name: str="object") -> str:
+	try:
+		return base64.urlsafe_b64decode(data_b64)
+	except Exception as e:
+		raise HTTPException(status_code=400, detail={obj_name: f"Invalid Base64: {e}"})

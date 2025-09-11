@@ -1,5 +1,5 @@
 from .litellm_pg_service import LiteLLMPGService
-from .key_pg_service import KeyPGService
+from .app_attest_pg_service import AppAttestPGService
 
 litellm_pg = LiteLLMPGService()
-key_pg = KeyPGService()
+app_attest_pg = AppAttestPGService()

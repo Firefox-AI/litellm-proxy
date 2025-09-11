@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # App Attest
     APP_BUNDLE_ID: str # ex: org.example.app
     APP_DEVELOPMENT_TEAM: str # ex: 12BC943KDC
-    KEY_DB_NAME: str # app attest public key database name: keys
+    APP_ATTEST_DB_NAME: str # app attest public key database name: keys
 
     # FxA
     CLIENT_ID: str

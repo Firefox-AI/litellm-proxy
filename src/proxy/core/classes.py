@@ -59,16 +59,13 @@ class Timer:
 			return json.dumps(results)
 		return ""
 
-class AttestationRequestV2(BaseModel):
+class AttestationRequest(BaseModel):
     key_id: str
-    challenge: str
-    attestation_obj: str
-
-class ChatPayload(BaseModel):
-    text: str
-
-class AssertionRequestV2(BaseModel):
+    challenge_b64: str
+    attestation_obj_b64: str
+	
+class AssertionRequest(BaseModel):
     key_id: Optional[str] = None
-    challenge: Optional[str] = None
-    assertion_obj: Optional[str] = None
-    payload: Optional[ChatPayload] = None
+    challenge_b64: Optional[str] = None
+    assertion_obj_b64: Optional[str] = None
+    payload: Optional[dict] = None

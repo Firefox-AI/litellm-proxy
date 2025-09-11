@@ -15,12 +15,12 @@ def fxa_callback(code: str = Query(...)):
 			code
 		)
 	except:
-		return {"error": f"Invalid FxA code."}
+		return {"error": f"Invalid FxA code"}
 	return {"access_token": token}
 
 def fxa_auth(authorization: Annotated[str | None, Header()]):
 	try:
 		profile = client.verify_token(authorization)
 	except Exception:
-		return {"error": "Invalid FxA token."}
+		return {"error": "Invalid FxA auth"}
 	return profile
