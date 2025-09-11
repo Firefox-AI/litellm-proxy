@@ -52,3 +52,4 @@ def b64decode_safe(data_b64: str, obj_name: str="object") -> str:
 		return base64.urlsafe_b64decode(data_b64)
 	except Exception as e:
 		raise HTTPException(status_code=400, detail={obj_name: f"Invalid Base64: {e}"})
+	
