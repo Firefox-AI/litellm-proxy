@@ -54,6 +54,6 @@ general_settings:
 
 Service account configured to hit VertexAI: `service_account.json` should be in directory root
 
-## API Documentation
+## API Documentation 
 
 After running, Swagger can be viewed at `http://0.0.0.0:<PORT>/api/docs`
