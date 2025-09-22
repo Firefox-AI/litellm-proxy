@@ -1,4 +1,4 @@
-# LiteLLM Proxy
+# Mozilla LLM Proxy Auth (MLPA)
 
 A proxy to verify App Attest/FxA payloads and proxy requests through LiteLLM to enact budgets and per user management.
 
@@ -10,7 +10,7 @@ make setup
 
 This creates a virtual environment in `.venv/`, installs dependencies, and installs the tool locally in editable mode.
 
-### Running LiteLLM Proxy locally with Docker
+### Running MLPA locally with Docker
 ```bash
 docker run --platform linux/amd64 --name litellm -v $(pwd)/litellm_config.yaml:/app/config.yaml -v $(pwd)/service_account.json:/app/service_account.json -p 4000:4000 ghcr.io/berriai/litellm:main-latest --config /app/config.yaml
 ```
