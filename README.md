@@ -12,7 +12,7 @@ This creates a virtual environment in `.venv/`, installs dependencies, and insta
 
 ### Running MLPA locally with Docker
 ```bash
-docker run --platform linux/amd64 --name litellm -v $(pwd)/litellm_config.yaml:/app/config.yaml -v $(pwd)/service_account.json:/app/service_account.json -p 4000:4000 ghcr.io/berriai/litellm:main-latest --config /app/config.yaml
+docker run --platform linux/amd64 --name litellm -v $(pwd)/litellm_config.yaml:/app/config.yaml -v $(pwd)/service_account.json:/app/service_account.json -p 4000:4000 ghcr.io/berriai/litellm:v1.77.3-stable --config /app/config.yaml
 ```
 
 ## Config (see [LiteLLM Documentation](https://docs.litellm.ai/docs/simple_proxy_old_doc) for more config options)
