@@ -11,9 +11,9 @@ model_list:
       vertex_project: "fx-gen-ai-sandbox"
       vertex_location: "us-south1"
       vertex_credentials: "/app/service_account.json"
-  - model_name: openai/gpt-3.5-turbo
+  - model_name: openai/gpt-4o
     litellm_params:
-      model: openai/gpt-3.5-turbo
+      model: openai/gpt-4o
       api_key: <OPENAI_API_KEY>
 
 general_settings:
