@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     LITELLM_DB_NAME: str = "litellm"
     CHALLENGE_EXPIRY_SECONDS: int = 300  # 5 minutes
     PORT: int | None = 8080
+    OPENAI_API_KEY: str | None = None
 
     # App Attest
     APP_BUNDLE_ID: str = "org.example.app"
@@ -28,6 +29,7 @@ class Settings(BaseSettings):
     SYSTEM_PROMPT: str = "You are a helpful assistant."
     MODEL_NAME: str = "gpt-4"
     TEMPERATURE: float = 0.1
+    MAX_COMPLETION_TOKENS: int = 1024
     TOP_P: float = 0.01
 
     class Config:

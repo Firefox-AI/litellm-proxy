@@ -32,16 +32,16 @@ tags_metadata = [
 
 async def authorize(
     request_body: AssertionRequest,
-    authorization: Annotated[str | None, Header()] = None
+    fxa_authorization: Annotated[str | None, Header()] = None
 ):
 	if request_body and request_body.key_id and request_body.challenge_b64 and request_body.assertion_obj_b64 and request_body.payload:
 		data = await app_attest_auth(request_body)
 		if data:
 			if data.get("error"):
 				raise HTTPException(status_code=400, detail=data["error"])
-			return {"user_id": request_body.key_id, "payload": request_body.payload}
-	if authorization:
-		fxa_user_id = fxa_auth(authorization)
+			return {"user": request_body.key_id, "payload": request_body.payload}
+	if fxa_authorization:
+		fxa_user_id = fxa_auth(fxa_authorization)
 		if fxa_user_id:
 			if fxa_user_id.get("error"):
 				raise HTTPException(status_code=401, detail=fxa_user_id["error"])
@@ -77,14 +77,14 @@ app.include_router(fxa_router, prefix="/fxa")
 async def proxy_request(
 	auth_res: Annotated[Optional[dict], Depends(authorize)],
 ):
-	user_id = auth_res["user_id"]
+	user_id = auth_res["user"]
 	user, _ = await get_or_create_end_user(user_id)
 	if (user.get("blocked")):
 		raise HTTPException(
 			status_code=403,
 			detail={"error": "User is blocked."}
 		)
-	res = await completion(auth_res["payload"].text, user["user_id"])
+	res = await completion(auth_res["payload"]["text"], user["user_id"])
 	return res
 
 @app.post("/user/update")

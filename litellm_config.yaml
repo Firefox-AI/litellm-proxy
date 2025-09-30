@@ -14,9 +14,9 @@ model_list:
   - model_name: openai/gpt-4o
     litellm_params:
       model: openai/gpt-4o
-      api_key: <OPENAI_API_KEY>
+      api_key: os.environ/OPENAI_API_KEY
 
 general_settings:
-  master_key: "sk-1234"
-  database_url: "postgresql://user:password@host.docker.internal:5432/test"
+  master_key: os.environ/MASTER_KEY
+  database_url: os.environ/PG_DB_URL
   litellm_key_header_name: X-Litellm-Key

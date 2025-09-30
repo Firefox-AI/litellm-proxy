@@ -1,26 +1,16 @@
 from typing import Annotated
-from fastapi import Header, APIRouter, Query
+from fastapi import Header, APIRouter
 from fxa.oauth import Client
 from ...config import settings
 
 router = APIRouter()
-client = Client()
+fxa_url = "https://api-accounts.stage.mozaws.net/v1" if settings.DEBUG else "https://oauth.accounts.firefox.com/v1"
+client = Client(settings.CLIENT_ID, settings.CLIENT_SECRET, fxa_url)
 
-@router.get("/callback", tags=["FxA"])
-def fxa_callback(code: str = Query(...)):
+def fxa_auth(fxa_authorization: Annotated[str | None, Header()]):
+	token = fxa_authorization.removeprefix("Bearer ").split()[0]
 	try:
-		token = client.trade_code(
-			settings.CLIENT_ID, 
-			settings.CLIENT_SECRET, 
-			code
-		)
-	except:
-		return {"error": f"Invalid FxA code"}
-	return {"access_token": token}
-
-def fxa_auth(authorization: Annotated[str | None, Header()]):
-	try:
-		profile = client.verify_token(authorization)
-	except Exception:
-		return {"error": "Invalid FxA auth"}
+		profile = client.verify_token(token, scope="profile")
+	except Exception as e:
+		return {"error": f"Invalid FxA auth: {e}"}
 	return profile

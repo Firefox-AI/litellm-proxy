@@ -10,10 +10,13 @@ make setup
 
 This creates a virtual environment in `.venv/`, installs dependencies, and installs the tool locally in editable mode.
 
-### Running MLPA locally with Docker
-```bash
-docker run --platform linux/amd64 --name litellm -v $(pwd)/litellm_config.yaml:/app/config.yaml -v $(pwd)/service_account.json:/app/service_account.json -p 4000:4000 ghcr.io/berriai/litellm:v1.77.3-stable --config /app/config.yaml
-```
+## Running MLPA locally with Docker
+
+### Run LiteLLM
+`docker compose -f litellm_docker_compose.yaml up -d`
+
+### Run MLPA
+`litellm-proxy`
 
 ## Config (see [LiteLLM Documentation](https://docs.litellm.ai/docs/simple_proxy_old_doc) for more config options)
 `.env` (see `config.py` for all configuration variables)
@@ -36,24 +39,10 @@ TEMPERATURE=0.1
 TOP_P=0.01
 ```
 
-### Example `litellm_config.yaml`
-```yaml
-model_list:
-  - model_name: <provider>/<model_name>
-    litellm_params:
-      model: <provider>/<model_name>
-      vertex_project: <gcp_project_name>
-      vertex_location: <gcp_region>
-      vertex_credentials: "/app/service_account.json"
-
-general_settings:
-  master_key: "sk-1234..." # match MASTER_KEY in .env
-  database_url: "postgresql://user:password@host.docker.internal:5432/test"
-  litellm_key_header_name: X-Litellm-Key
-```
+### Also See `litellm_config.yaml` for litellm config
 
 Service account configured to hit VertexAI: `service_account.json` should be in directory root
 
 ## API Documentation 
 
-After running, Swagger can be viewed at `http://0.0.0.0:<PORT>/api/docs`
+After running, Swagger can be viewed at `http://localhost:<PORT>/api/docs`

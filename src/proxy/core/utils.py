@@ -1,7 +1,7 @@
 import base64
 from .config import settings
 import httpx
-from fastapi import HTTPException, Header
+from fastapi import HTTPException
 
 LITELLM_COMPLETIONS_URL = f"{settings.LITELLM_API_BASE}/v1/chat/completions"
 LITELLM_HEADERS = {

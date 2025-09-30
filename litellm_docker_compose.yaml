@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:v1.77.3-stable
+    container_name: litellm
+    platform: linux/amd64
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml
+      - ./service_account.json:/app/service_account.json
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MASTER_KEY=${MASTER_KEY}
+      - PG_DB_URL=${PG_DB_URL}/postgres
+    command: ["--config", "/app/config.yaml"]
