@@ -1,11 +1,16 @@
 from fastapi import HTTPException, Header
-from ..config import settings
+from ..config import env
 from ..classes import UserUpdatePayload
 from .pg_service import PGService
 
 class LiteLLMPGService(PGService):
 	def __init__(self):
-		super().__init__(settings.LITELLM_DB_NAME)
+		super().__init__(env.LITELLM_DB_NAME)
+
+	async def get_user(self, user_id: str):
+		query = 'SELECT * FROM "LiteLLM_EndUserTable" WHERE user_id = $1'
+		user = await self.pg.fetchrow(query, user_id)
+		return dict(user) if user else None
 
 	async def update_user(
 		self,
@@ -23,7 +28,7 @@ class LiteLLMPGService(PGService):
 			"alias": null
 		}
 		"""
-		if master_key != f"Bearer {settings.MASTER_KEY}":
+		if master_key != f"Bearer {env.MASTER_KEY}":
 			raise HTTPException(status_code=401, detail={"error": "Unauthorized"})
 
 		update_data = request.model_dump(exclude_unset=True)

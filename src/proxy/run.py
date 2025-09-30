@@ -3,11 +3,12 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Header
 from contextlib import asynccontextmanager
 from typing import Annotated, Optional
-from .core.classes import UserUpdatePayload, AssertionRequest
-from .core.routers.fxa import fxa_auth, fxa_router
+from .core.classes import AssertionRequest
 from .core.routers.health import health_router
 from .core.routers.appattest import appattest_router, app_attest_auth
-from .core.config import settings
+from .core.routers.fxa import fxa_auth, fxa_router
+from .core.routers.user import user_router
+from .core.config import env
 from .core.pg_services.services import app_attest_pg, litellm_pg
 from .core.utils import completion, get_or_create_end_user
 
@@ -32,7 +33,7 @@ tags_metadata = [
 
 async def authorize(
     request_body: AssertionRequest,
-    fxa_authorization: Annotated[str | None, Header()] = None
+    x_fxa_authorization: Annotated[str | None, Header()] = None
 ):
 	if request_body and request_body.key_id and request_body.challenge_b64 and request_body.assertion_obj_b64 and request_body.payload:
 		data = await app_attest_auth(request_body)
@@ -40,8 +41,8 @@ async def authorize(
 			if data.get("error"):
 				raise HTTPException(status_code=400, detail=data["error"])
 			return {"user": request_body.key_id, "payload": request_body.payload}
-	if fxa_authorization:
-		fxa_user_id = fxa_auth(fxa_authorization)
+	if x_fxa_authorization:
+		fxa_user_id = fxa_auth(x_fxa_authorization)
 		if fxa_user_id:
 			if fxa_user_id.get("error"):
 				raise HTTPException(status_code=401, detail=fxa_user_id["error"])
@@ -72,9 +73,10 @@ app = FastAPI(
 app.include_router(health_router, prefix="/health")
 app.include_router(appattest_router, prefix="/verify")
 app.include_router(fxa_router, prefix="/fxa")
+app.include_router(user_router, prefix="/user")
 
 @app.post("/v1/chat/completions", tags=["LiteLLM"], description="Authorize first using App Attest or FxA. Either pass the FxA token in the Authorization header or include the `{key_id, challenge, and assertion_obj}` in the request body. `payload` is always required and contains the prompt.", )
-async def proxy_request(
+async def chat_completion(
 	auth_res: Annotated[Optional[dict], Depends(authorize)],
 ):
 	user_id = auth_res["user"]
@@ -87,15 +89,8 @@ async def proxy_request(
 	res = await completion(auth_res["payload"]["text"], user["user_id"])
 	return res
 
-@app.post("/user/update")
-async def update_user_helper(
-	request: UserUpdatePayload,
-	master_key: str = Header(...)
-):
-	return await litellm_pg.update_user(request, master_key)
-
 def main():
-	uvicorn.run(app, host="0.0.0.0", port=settings.PORT, timeout_keep_alive=10)
+	uvicorn.run(app, host="0.0.0.0", port=env.PORT, timeout_keep_alive=10)
 
 if __name__ == "__main__":
 	main()

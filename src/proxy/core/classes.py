@@ -3,9 +3,9 @@ import json
 from typing import Any, Dict, Optional
 from pydantic import BaseModel
 import time
-from .config import settings
+from .config import env
 
-DEBUG = settings.DEBUG
+DEBUG = env.DEBUG
 
 class MessagesPayload(BaseModel):
 	payload: Dict[str, Any] = {}
@@ -46,7 +46,7 @@ class Timer:
 	
 	def log(self):
 		if DEBUG:
-			with open(settings.METRICS_LOG_FILE, "a") as f:
+			with open(env.METRICS_LOG_FILE, "a") as f:
 				f.write(self.__str__() + "\n")
 			print(self)
 

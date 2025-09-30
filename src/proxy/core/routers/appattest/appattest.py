@@ -13,7 +13,7 @@ from pyattest.attestation import Attestation
 from pyattest.assertion import Assertion
 from cryptography.x509.base import load_pem_x509_certificate
 from pathlib import Path
-from ...config import settings
+from ...config import env
 from ...pg_services.services import app_attest_pg
 
 challenge_store = {}
@@ -29,7 +29,7 @@ async def generate_client_challenge(key_id: str) -> str:
 	"""Create a unique challenge tied to a key ID"""
 	# First check if challenge already exists for key_id (relevant security measure, & they're on PRIMARY KEY key_id)
 	stored_challenge = await app_attest_pg.get_challenge(key_id)
-	if not stored_challenge or time.time() - stored_challenge.get("created_at").timestamp() > settings.CHALLENGE_EXPIRY_SECONDS:
+	if not stored_challenge or time.time() - stored_challenge.get("created_at").timestamp() > env.CHALLENGE_EXPIRY_SECONDS:
 		challenge = binascii.hexlify(os.urandom(32)).decode("utf-8") # Slightly faster than secrets.token_urlsafe(32)
 		await app_attest_pg.store_challenge(key_id, challenge)
 		return challenge
@@ -41,14 +41,14 @@ async def validate_challenge(challenge: str, key_id: str) -> bool:
 	stored_challenge = await app_attest_pg.get_challenge(key_id)
 	print(f"{stored_challenge=}")
 	await app_attest_pg.delete_challenge(key_id)  # Remove challenge after one use
-	if not stored_challenge or time.time() - stored_challenge.get("created_at").timestamp() > settings.CHALLENGE_EXPIRY_SECONDS:
+	if not stored_challenge or time.time() - stored_challenge.get("created_at").timestamp() > env.CHALLENGE_EXPIRY_SECONDS:
 		return False
 	return challenge == stored_challenge["challenge"]
 
 async def verify_attest(key_id: str, challenge: str, attestation_obj: str):
 	config = AppleConfig(
 		key_id=key_id,
-		app_id=f"{settings.APP_DEVELOPMENT_TEAM}.{settings.APP_BUNDLE_ID}",
+		app_id=f"{env.APP_DEVELOPMENT_TEAM}.{env.APP_BUNDLE_ID}",
 		root_ca=root_ca_pem,
 		production=False
 	)
@@ -106,7 +106,7 @@ async def verify_assert(key_id: str, assertion: str, payload: dict):
 	
 	config = AppleConfig(
 		key_id=key_id,
-		app_id=f"{settings.APP_DEVELOPMENT_TEAM}.{settings.APP_BUNDLE_ID}",
+		app_id=f"{env.APP_DEVELOPMENT_TEAM}.{env.APP_BUNDLE_ID}",
 		root_ca=root_ca_pem,
 		production=False
 	)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from .appattest import (
 	generate_client_challenge,
 	validate_challenge,

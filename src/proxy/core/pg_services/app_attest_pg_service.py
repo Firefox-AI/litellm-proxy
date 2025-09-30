@@ -1,9 +1,9 @@
-from ..config import settings
+from ..config import env
 from .pg_service import PGService
 
 class AppAttestPGService(PGService):
 	def __init__(self):
-		super().__init__(settings.APP_ATTEST_DB_NAME)
+		super().__init__(env.APP_ATTEST_DB_NAME)
 
 	# Challenges #
 	async def store_challenge(self, key_id: str, challenge: str):
