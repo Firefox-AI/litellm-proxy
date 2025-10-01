@@ -1,9 +1,12 @@
 import base64
-from .config import LITELLM_COMPLETIONS_URL, LITELLM_HEADERS, env
 import httpx
+import time
 from fastapi import HTTPException
+from .config import env, LITELLM_COMPLETIONS_URL, LITELLM_HEADERS
+from .prometheus_metrics import metrics
 
 async def completion(prompt: str, end_user_id: str):
+	start_time = time.time()
 	body = {
 		"model": env.MODEL_NAME, 
 		"messages": [
@@ -13,14 +16,16 @@ async def completion(prompt: str, end_user_id: str):
 		"temperature": env.TEMPERATURE,
 		"top_p": env.TOP_P,
 		"max_tokens": env.MAX_COMPLETION_TOKENS,
-		"user": end_user_id
+		"user": end_user_id,
 	}
 	try:
 		async with httpx.AsyncClient() as client:
 			response = await client.post(LITELLM_COMPLETIONS_URL, headers=LITELLM_HEADERS, json=body, timeout=10)
 			data = response.json()
+			metrics.chat_completion_latency.labels(result="success").observe(time.time() - start_time)
 			return data
 	except Exception as e:
+		metrics.chat_completion_latency.labels(result="error").observe(time.time() - start_time)
 		raise HTTPException(
 			status_code=500,
 			detail={"error": f"Failed to proxy request to {LITELLM_COMPLETIONS_URL}: {e}"}

@@ -28,7 +28,6 @@ async def attest(request: AttestationRequest):
 		result = await verify_attest(request.key_id, challenge, attestation_obj)
 	except ValueError as e:
 		raise HTTPException(status_code=403, detail=str(e))
-
 	return result
 
 # Assert - send key_id, challenge_b64, assertion_obj_b64, payload
@@ -40,8 +39,9 @@ async def app_attest_auth(request: AssertionRequest):
 	assertion_obj = b64decode_safe(request.assertion_obj_b64, "assertion_obj_b64")
 
 	try:
-		return await verify_assert(request.key_id, assertion_obj, request.payload)
+		result = await verify_assert(request.key_id, assertion_obj, request.payload)
 	except HTTPException:
 		return {"error": "Invalid App Attest auth"}
 	except Exception as e:
 		return {"error": str(e)}
+	return result

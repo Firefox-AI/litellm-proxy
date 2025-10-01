@@ -15,6 +15,7 @@ from cryptography.x509.base import load_pem_x509_certificate
 from pathlib import Path
 from ...config import env
 from ...pg_services.services import app_attest_pg
+from ...prometheus_metrics import metrics
 
 challenge_store = {}
 
@@ -38,14 +39,18 @@ async def generate_client_challenge(key_id: str) -> str:
 
 async def validate_challenge(challenge: str, key_id: str) -> bool:
 	"""Check that the challenge exists, is fresh, and matches key_id"""
+	start_time = time.time()
 	stored_challenge = await app_attest_pg.get_challenge(key_id)
-	print(f"{stored_challenge=}")
 	await app_attest_pg.delete_challenge(key_id)  # Remove challenge after one use
-	if not stored_challenge or time.time() - stored_challenge.get("created_at").timestamp() > env.CHALLENGE_EXPIRY_SECONDS:
-		return False
-	return challenge == stored_challenge["challenge"]
+	try:
+		if not stored_challenge or time.time() - stored_challenge.get("created_at").timestamp() > env.CHALLENGE_EXPIRY_SECONDS:
+			return False
+		return challenge == stored_challenge["challenge"]
+	finally:
+		metrics.validate_challenge_latency.observe(time.time() - start_time)
 
 async def verify_attest(key_id: str, challenge: str, attestation_obj: str):
+	start_time = time.time()
 	config = AppleConfig(
 		key_id=key_id,
 		app_id=f"{env.APP_DEVELOPMENT_TEAM}.{env.APP_BUNDLE_ID}",
@@ -84,8 +89,10 @@ async def verify_attest(key_id: str, challenge: str, attestation_obj: str):
 			encoding=serialization.Encoding.PEM,
 			format=serialization.PublicFormat.SubjectPublicKeyInfo
 		).decode('utf-8')
+		metrics.validate_app_attest_latency.labels(result="success").observe(time.time() - start_time)
 
 	except Exception as e:
+		metrics.validate_app_attest_latency.labels(result="error").observe(time.time() - start_time)
 		raise HTTPException(status_code=403, detail=f"Attestation verification failed: {e}")
 	
 	# save_public_key
@@ -94,6 +101,7 @@ async def verify_attest(key_id: str, challenge: str, attestation_obj: str):
 	return {"status": "success"}
 
 async def verify_assert(key_id: str, assertion: str, payload: dict):
+	start_time = time.time()
 	payload_bytes = json.dumps(payload, sort_keys=True, separators=(',', ':')).encode()
 	expected_hash = hashlib.sha256(payload_bytes).digest()
 
@@ -114,7 +122,9 @@ async def verify_assert(key_id: str, assertion: str, payload: dict):
 	try:
 		assertion_to_test = Assertion(assertion, expected_hash, public_key_obj, config)
 		assertion_to_test.verify()
+		metrics.validate_app_assert_latency.labels(result="success").observe(time.time() - start_time)
 	except Exception as e:
+		metrics.validate_app_assert_latency.labels(result="error").observe(time.time() - start_time)
 		raise HTTPException(status_code=403, detail=f"Assertion verification failed: {e}")
 
 

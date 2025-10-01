@@ -1,15 +1,18 @@
 
+import time
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, Header
 from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Depends, Header, Request, Response
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from typing import Annotated, Optional
 from .core.classes import AssertionRequest
-from .core.routers.health import health_router
-from .core.routers.appattest import appattest_router, app_attest_auth
-from .core.routers.fxa import fxa_auth, fxa_router
-from .core.routers.user import user_router
 from .core.config import env
 from .core.pg_services.services import app_attest_pg, litellm_pg
+from .core.prometheus_metrics import metrics
+from .core.routers.appattest import appattest_router, app_attest_auth
+from .core.routers.fxa import fxa_auth, fxa_router
+from .core.routers.health import health_router
+from .core.routers.user import user_router
 from .core.utils import completion, get_or_create_end_user
 
 tags_metadata = [
@@ -69,6 +72,32 @@ app = FastAPI(
 	openapi_tags=tags_metadata,
 	lifespan=lifespan
 )
+
+# run before all requests
+@app.middleware("http")
+async def instrument_requests(request: Request, call_next):
+    """
+    Measures request latency, counts total requests, and tracks requests in progress.
+    """
+    start_time = time.time()
+    metrics.in_progress_requests.inc()
+
+    try:
+        response = await call_next(request)
+
+        metrics.request_latency.observe(time.time() - start_time)
+
+        route = request.scope.get('route')
+        endpoint = route.path if route else request.url.path
+        metrics.requests_total.labels(method=request.method, endpoint=endpoint).inc()
+        metrics.response_status_codes.labels(status_code=response.status_code).inc()
+        return response
+    finally:
+        metrics.in_progress_requests.dec()
+
+@app.get("/metrics")
+async def get_metrics():
+	return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 app.include_router(health_router, prefix="/health")
 app.include_router(appattest_router, prefix="/verify")
