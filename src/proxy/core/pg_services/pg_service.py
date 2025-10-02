@@ -2,6 +2,7 @@ import os
 import asyncpg
 from ..config import env
 
+
 class PGService:
 	pg: asyncpg.Connection
 

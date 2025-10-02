@@ -1,6 +1,7 @@
 from ..config import env
 from .pg_service import PGService
 
+
 class AppAttestPGService(PGService):
 	def __init__(self):
 		super().__init__(env.APP_ATTEST_DB_NAME)
@@ -16,14 +17,17 @@ class AppAttestPGService(PGService):
         		challenge = EXCLUDED.challenge,
 				created_at = NOW()
 				""",
-				key_id, challenge
+				key_id,
+				challenge,
 			)
 		except Exception as e:
 			print(f"Error storing challenge: {e}")
 
 	async def get_challenge(self, key_id: str) -> dict | None:
 		try:
-			return await self.pg.fetchrow("SELECT challenge, created_at FROM challenges WHERE key_id = $1", key_id)
+			return await self.pg.fetchrow(
+				"SELECT challenge, created_at FROM challenges WHERE key_id = $1", key_id
+			)
 		except Exception as e:
 			print(f"Error retrieving challenge: {e}")
 
@@ -41,7 +45,8 @@ class AppAttestPGService(PGService):
 				INSERT INTO public_keys (key_id, public_key)
 				VALUES ($1, $2)
 				""",
-				key_id, public_key
+				key_id,
+				public_key,
 			)
 		except Exception as e:
 			print(f"Error storing key: {e}")
@@ -53,7 +58,7 @@ class AppAttestPGService(PGService):
 				SELECT public_key FROM public_keys
 				WHERE key_id = $1
 				""",
-				key_id
+				key_id,
 			)
 			if record:
 				return record["public_key"]

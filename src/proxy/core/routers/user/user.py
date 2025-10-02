@@ -3,6 +3,7 @@ from ...pg_services.services import litellm_pg
 
 router = APIRouter()
 
+
 @router.get("/{user_id}", tags=["User"])
 async def user_info(user_id: str):
 	if not user_id:
