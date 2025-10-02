@@ -3,6 +3,7 @@ cbor2==5.7.0
 cryptography==45.0.7
 fastapi==0.116.1
 httpx==0.28.1
+prometheus_client==0.23.1
 pyattest==1.0.2
 pydantic==2.11.7
 pydantic_settings==2.10.1
