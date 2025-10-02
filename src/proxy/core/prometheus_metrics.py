@@ -1,5 +1,10 @@
 from prometheus_client import Counter, Gauge, Histogram
 from dataclasses import dataclass
+from enum import Enum
+
+class PrometheusResult(Enum):
+    SUCCESS = "success"
+    ERROR = "error"
 
 @dataclass
 class PrometheusMetrics:
@@ -12,6 +17,7 @@ class PrometheusMetrics:
     validate_app_assert_latency: Histogram
     validate_fxa_latency: Histogram
     chat_completion_latency: Histogram
+    chat_completion_ttft: Histogram # time to first token (when stream=True)
 
 metrics = PrometheusMetrics(
     in_progress_requests=Gauge(
@@ -55,5 +61,9 @@ metrics = PrometheusMetrics(
         'chat_completion_latency_seconds',
         'Chat completion latency in seconds.',
         ['result']
+    ),
+    chat_completion_ttft=Histogram(
+        'chat_completion_ttft_seconds',
+        'Time to first token for streaming chat completions in seconds.'
     )
 )

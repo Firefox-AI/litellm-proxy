@@ -15,7 +15,7 @@ from cryptography.x509.base import load_pem_x509_certificate
 from pathlib import Path
 from ...config import env
 from ...pg_services.services import app_attest_pg
-from ...prometheus_metrics import metrics
+from ...prometheus_metrics import PrometheusResult, metrics
 
 challenge_store = {}
 
@@ -58,6 +58,7 @@ async def verify_attest(key_id: str, challenge: str, attestation_obj: str):
 		production=False
 	)
 
+	result = PrometheusResult.ERROR
 	try:
 		attestation = Attestation(attestation_obj, challenge, config)
 		await run_in_threadpool(attestation.verify)
@@ -89,11 +90,12 @@ async def verify_attest(key_id: str, challenge: str, attestation_obj: str):
 			encoding=serialization.Encoding.PEM,
 			format=serialization.PublicFormat.SubjectPublicKeyInfo
 		).decode('utf-8')
-		metrics.validate_app_attest_latency.labels(result="success").observe(time.time() - start_time)
+		result = PrometheusResult.SUCCESS
 
 	except Exception as e:
-		metrics.validate_app_attest_latency.labels(result="error").observe(time.time() - start_time)
 		raise HTTPException(status_code=403, detail=f"Attestation verification failed: {e}")
+	finally:
+		metrics.validate_app_attest_latency.labels(result=result).observe(time.time() - start_time)
 	
 	# save_public_key
 	await app_attest_pg.store_key(key_id, public_key_pem)
@@ -119,13 +121,14 @@ async def verify_assert(key_id: str, assertion: str, payload: dict):
 		production=False
 	)
 	
+	result = PrometheusResult.ERROR
 	try:
 		assertion_to_test = Assertion(assertion, expected_hash, public_key_obj, config)
 		assertion_to_test.verify()
-		metrics.validate_app_assert_latency.labels(result="success").observe(time.time() - start_time)
+		result = PrometheusResult.SUCCESS
 	except Exception as e:
-		metrics.validate_app_assert_latency.labels(result="error").observe(time.time() - start_time)
 		raise HTTPException(status_code=403, detail=f"Assertion verification failed: {e}")
-
+	finally:
+		metrics.validate_app_assert_latency.labels(result=result).observe(time.time() - start_time)
 
 	return {"status": "success"}

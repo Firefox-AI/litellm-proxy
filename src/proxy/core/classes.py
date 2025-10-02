@@ -23,3 +23,4 @@ class AssertionRequest(BaseModel):
     challenge_b64: Optional[str] = None
     assertion_obj_b64: Optional[str] = None
     payload: Optional[dict] = None
+    stream: Optional[bool] = False

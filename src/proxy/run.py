@@ -3,6 +3,7 @@ import time
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Header, Request, Response
+from fastapi.responses import StreamingResponse
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from typing import Annotated, Optional
 from .core.classes import AssertionRequest
@@ -13,7 +14,7 @@ from .core.routers.appattest import appattest_router, app_attest_auth
 from .core.routers.fxa import fxa_auth, fxa_router
 from .core.routers.health import health_router
 from .core.routers.user import user_router
-from .core.utils import completion, get_or_create_end_user
+from .core.utils import get_completion, stream_completion, get_or_create_user
 
 tags_metadata = [
 	{
@@ -21,12 +22,12 @@ tags_metadata = [
 		"description": "Health check endpoints."
 	},
 	{
+		"name": "Metrics",
+		"description": "Prometheus metrics endpoints."
+	},
+	{
 		"name": "App Attest",
 		"description": "Endpoints for verifying App Attest payloads."
-	}, 
-	{
-		"name": "FxA",
-		"description": "Endpoints for verifying FxA tokens."
 	},
 	{
 		"name": "LiteLLM",
@@ -43,14 +44,21 @@ async def authorize(
 		if data:
 			if data.get("error"):
 				raise HTTPException(status_code=400, detail=data["error"])
-			return {"user": request_body.key_id, "payload": request_body.payload}
+			return {
+				"user": request_body.key_id, 
+				"payload": request_body.payload,
+				"stream": request_body.stream
+			}
 	if x_fxa_authorization:
 		fxa_user_id = fxa_auth(x_fxa_authorization)
 		if fxa_user_id:
 			if fxa_user_id.get("error"):
 				raise HTTPException(status_code=401, detail=fxa_user_id["error"])
-			return {**fxa_user_id, "payload": request_body.payload}
-
+			return {
+				**fxa_user_id, 
+				"payload": request_body.payload,
+				"stream": request_body.stream
+			}
 	raise HTTPException(
 		status_code=401,
 		detail="Please authenticate with App Attest or FxA."
@@ -95,7 +103,7 @@ async def instrument_requests(request: Request, call_next):
     finally:
         metrics.in_progress_requests.dec()
 
-@app.get("/metrics")
+@app.get("/metrics", tags=["Metrics"])
 async def get_metrics():
 	return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
@@ -104,19 +112,40 @@ app.include_router(appattest_router, prefix="/verify")
 app.include_router(fxa_router, prefix="/fxa")
 app.include_router(user_router, prefix="/user")
 
-@app.post("/v1/chat/completions", tags=["LiteLLM"], description="Authorize first using App Attest or FxA. Either pass the FxA token in the Authorization header or include the `{key_id, challenge, and assertion_obj}` in the request body. `payload` is always required and contains the prompt.", )
+@app.post("/v1/chat/completions", tags=["LiteLLM"], description="Authorize first using App Attest or FxA. Either pass the x-fxa-authorization header or include the `{key_id, challenge, and assertion_obj}` in the request body for app attest authorization. `payload` is always required and contains the prompt.", )
 async def chat_completion(
 	auth_res: Annotated[Optional[dict], Depends(authorize)],
 ):
-	user_id = auth_res["user"]
-	user, _ = await get_or_create_end_user(user_id)
+	payload = auth_res.get("payload")
+	if not payload or not payload.get("text"):
+		raise HTTPException(
+			status_code=400,
+			detail={"error": "Payload must include 'text' object"}
+		)
+	user_id = auth_res.get("user")
+	if not user_id:
+		raise HTTPException(
+			status_code=400,
+			detail={"error": "User not found from authorization response."}
+		)
+	user, _ = await get_or_create_user(user_id)
 	if (user.get("blocked")):
 		raise HTTPException(
 			status_code=403,
 			detail={"error": "User is blocked."}
 		)
-	res = await completion(auth_res["payload"]["text"], user["user_id"])
-	return res
+	payload = auth_res.get("payload")
+
+	if auth_res.get("stream"):
+		return StreamingResponse(
+			stream_completion(auth_res["payload"]["text"], user["user_id"]),
+			media_type="text/event-stream"
+		)
+	else:
+		return await get_completion(
+			prompt=auth_res["payload"]["text"], 
+			user_id=user["user_id"],
+		)
 
 def main():
 	uvicorn.run(app, host="0.0.0.0", port=env.PORT, timeout_keep_alive=10)
