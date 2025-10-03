@@ -4,6 +4,7 @@ import time
 from fastapi import HTTPException
 from .config import env, LITELLM_COMPLETIONS_URL, LITELLM_HEADERS
 from .prometheus_metrics import PrometheusResult, metrics
+import tiktoken
 
 
 async def stream_completion(prompt: str, user_id: str):
@@ -26,6 +27,7 @@ async def stream_completion(prompt: str, user_id: str):
 	}
 	result = PrometheusResult.ERROR
 	is_first_token = True
+	num_completion_tokens = 0
 	try:
 		async with httpx.AsyncClient() as client:
 			async with client.stream(
@@ -37,10 +39,22 @@ async def stream_completion(prompt: str, user_id: str):
 			) as response:
 				response.raise_for_status()
 				async for chunk in response.aiter_bytes():
+					num_completion_tokens += 1
 					if is_first_token:
 						metrics.chat_completion_ttft.observe(time.time() - start_time)
 						is_first_token = False
 					yield chunk
+
+				# Update token metrics after streaming is complete
+				try:
+					tokenizer = tiktoken.encoding_for_model(env.MODEL_NAME)
+				except KeyError:
+					tokenizer = tiktoken.get_encoding("cl100k_base")
+				prompt_tokens = len(tokenizer.encode(env.SYSTEM_PROMPT)) + len(
+					tokenizer.encode(prompt)
+				)
+				metrics.chat_tokens.labels(type="prompt").inc(prompt_tokens)
+				metrics.chat_tokens.labels(type="completion").inc(num_completion_tokens)
 				result = PrometheusResult.SUCCESS
 	except httpx.HTTPStatusError as e:
 		print(
@@ -81,6 +95,13 @@ async def get_completion(prompt: str, user_id: str):
 			)
 			response.raise_for_status()
 			data = response.json()
+			usage = data.get("usage", {})
+			prompt_tokens = usage.get("prompt_tokens", 0)
+			completion_tokens = usage.get("completion_tokens", 0)
+
+			metrics.chat_tokens.labels(type="prompt").inc(prompt_tokens)
+			metrics.chat_tokens.labels(type="completion").inc(completion_tokens)
+
 			result = PrometheusResult.SUCCESS
 			return data
 	except Exception as e:

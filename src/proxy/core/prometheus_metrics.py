@@ -20,6 +20,7 @@ class PrometheusMetrics:
 	validate_fxa_latency: Histogram
 	chat_completion_latency: Histogram
 	chat_completion_ttft: Histogram  # time to first token (when stream=True)
+	chat_tokens: Counter
 
 
 metrics = PrometheusMetrics(
@@ -63,5 +64,10 @@ metrics = PrometheusMetrics(
 	chat_completion_ttft=Histogram(
 		"chat_completion_ttft_seconds",
 		"Time to first token for streaming chat completions in seconds.",
+	),
+	chat_tokens=Counter(
+		"chat_tokens",
+		"Number of tokens for chat completions.",
+		["type"],
 	),
 )
