@@ -92,10 +92,12 @@ async def instrument_requests(request: Request, call_next):
 	try:
 		response = await call_next(request)
 
-		metrics.request_latency.observe(time.time() - start_time)
-
 		route = request.scope.get("route")
 		endpoint = route.path if route else request.url.path
+
+		metrics.request_latency.labels(
+			method=request.method, endpoint=endpoint
+		).observe(time.time() - start_time)
 		metrics.requests_total.labels(method=request.method, endpoint=endpoint).inc()
 		metrics.response_status_codes.labels(status_code=response.status_code).inc()
 		return response
