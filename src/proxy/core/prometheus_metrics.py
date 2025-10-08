@@ -37,7 +37,9 @@ metrics = PrometheusMetrics(
 		"Total number of response status codes.",
 		["status_code"],
 	),
-	request_latency=Histogram("request_latency_seconds", "Request latency in seconds."),
+	request_latency=Histogram(
+		"request_latency_seconds", "Request latency in seconds.", ["method", "endpoint"]
+	),
 	validate_challenge_latency=Histogram(
 		"validate_challenge_latency_seconds", "Challenge validation latency in seconds."
 	),
