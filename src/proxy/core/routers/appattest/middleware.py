@@ -1,12 +1,13 @@
 from fastapi import APIRouter, HTTPException
+
+from ...classes import AssertionRequest, AttestationRequest
+from ...utils import b64decode_safe
 from .appattest import (
 	generate_client_challenge,
 	validate_challenge,
 	verify_assert,
 	verify_attest,
 )
-from ...classes import AssertionRequest, AttestationRequest
-from ...utils import b64decode_safe
 
 router = APIRouter()
 

@@ -7,13 +7,13 @@ repos:
       - id: check-json
       - id: check-merge-conflict
         args:
-          - '--assume-in-merge'
+          - "--assume-in-merge"
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
       - id: mixed-line-ending
         args:
-          - '--fix=lf'
+          - "--fix=lf"
       - id: sort-simple-yaml
       - id: trailing-whitespace
         exclude: \.ambr$
@@ -25,5 +25,7 @@ repos:
         args:
           - "--fix"
           - "--exit-non-zero-on-fix"
+          - "check"
+          - "."
         exclude: src/any_agent/vendor|demo
       - id: ruff-format

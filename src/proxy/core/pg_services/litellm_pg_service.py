@@ -1,6 +1,7 @@
-from fastapi import HTTPException, Header
-from ..config import env
+from fastapi import Header, HTTPException
+
 from ..classes import UserUpdatePayload
+from ..config import env
 from .pg_service import PGService
 
 

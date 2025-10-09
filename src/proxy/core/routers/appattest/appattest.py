@@ -1,18 +1,20 @@
-import cbor2
+import binascii
+import hashlib
 import json
+import os
 import time
+from pathlib import Path
+
+import cbor2
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.base import load_pem_x509_certificate
 from fastapi import HTTPException
 from fastapi.concurrency import run_in_threadpool
-import binascii
-import os
-import hashlib
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import serialization
-from pyattest.configs.apple import AppleConfig
-from pyattest.attestation import Attestation
 from pyattest.assertion import Assertion
-from cryptography.x509.base import load_pem_x509_certificate
-from pathlib import Path
+from pyattest.attestation import Attestation
+from pyattest.configs.apple import AppleConfig
+
 from ...config import env
 from ...pg_services.services import app_attest_pg
 from ...prometheus_metrics import PrometheusResult, metrics

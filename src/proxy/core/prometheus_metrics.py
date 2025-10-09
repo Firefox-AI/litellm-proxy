@@ -1,6 +1,7 @@
-from prometheus_client import Counter, Gauge, Histogram
 from dataclasses import dataclass
 from enum import Enum
+
+from prometheus_client import Counter, Gauge, Histogram
 
 
 class PrometheusResult(Enum):

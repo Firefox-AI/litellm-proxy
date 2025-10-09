@@ -1,10 +1,12 @@
 import base64
+import time
+
 import httpx
 import tiktoken
-import time
 from fastapi import HTTPException
+
 from .classes import AuthorizedChatRequest
-from .config import env, LITELLM_COMPLETIONS_URL, LITELLM_HEADERS
+from .config import LITELLM_COMPLETIONS_URL, LITELLM_HEADERS, env
 from .prometheus_metrics import PrometheusResult, metrics
 
 

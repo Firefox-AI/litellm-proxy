@@ -1,5 +1,7 @@
 from typing import Optional
+
 from pydantic import BaseModel
+
 from .config import env
 
 DEBUG = env.DEBUG

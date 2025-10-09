@@ -1,19 +1,21 @@
 import time
-import uvicorn
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, Header, Request, Response
-from fastapi.responses import StreamingResponse
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from typing import Annotated, Optional
+
+import uvicorn
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
+from fastapi.responses import StreamingResponse
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
 from .core.classes import AssertionRequest, AuthorizedChatRequest, ChatRequest
 from .core.config import env
 from .core.pg_services.services import app_attest_pg, litellm_pg
 from .core.prometheus_metrics import metrics
-from .core.routers.appattest import appattest_router, app_attest_auth
+from .core.routers.appattest import app_attest_auth, appattest_router
 from .core.routers.fxa import fxa_auth, fxa_router
 from .core.routers.health import health_router
 from .core.routers.user import user_router
-from .core.utils import get_completion, stream_completion, get_or_create_user
+from .core.utils import get_completion, get_or_create_user, stream_completion
 
 tags_metadata = [
 	{"name": "Health", "description": "Health check endpoints."},
