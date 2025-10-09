@@ -5,3 +5,4 @@
 .DS_Store
 metrics.jsonl
 service_account.json
+.ruff_cache
