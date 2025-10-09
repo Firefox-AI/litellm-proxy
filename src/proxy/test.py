@@ -38,30 +38,32 @@ REQ_PER_SECOND = 50
 PROXY_API_BASE = "http://localhost:8080"
 JWT_SECRET = os.getenv("JWT_SECRET")
 
+
 class User:
-	def __init__(self, id:str=None):
+	def __init__(self, id: str = None):
 		self.id = id or str(uuid.uuid4())
 		self.stats = {}
 		self.key = jwt.encode({"user_id": self.id}, JWT_SECRET, algorithm="HS256")
 
 	async def simulate_request(self):
 		start = time.time()
-		payload = {"user_id": self.id, "fxa_payload": {"uid": "test"}, "messages": [{
-			"role": "user",
-			"content": "Hello!"
-		}]}
+		payload = {
+			"user_id": self.id,
+			"fxa_payload": {"uid": "test"},
+			"messages": [{"role": "user", "content": "Hello!"}],
+		}
 		headers = {
-			"Authorization": f"Bearer ", # fill in with gcloud auth print-identity-token
+			"Authorization": "Bearer ",  # fill in with gcloud auth print-identity-token
 			"Content-Type": "application/json",
-			"proxy-auth": f"Bearer {self.key}"
+			"proxy-auth": f"Bearer {self.key}",
 		}
 		async with httpx.AsyncClient() as client:
 			try:
 				url = f"{PROXY_API_BASE}/v1/chat/completions"
 
 				response = await client.post(url, json=payload, headers=headers)
-			except:
-				self.stats = {"success": False, "error": "Connection error"}
+			except Exception as e:
+				self.stats = {"success": False, "error": e}
 				return
 			response.raise_for_status()
 			end = time.time()
@@ -70,6 +72,7 @@ class User:
 
 	def __str__(self):
 		return f"User(id={self.id}, stats={self.stats})"
+
 
 async def test_server_rps_limit(max_rps=8, test_duration=10):
 	"""
@@ -82,7 +85,9 @@ async def test_server_rps_limit(max_rps=8, test_duration=10):
 	random.shuffle(users)
 	start_time = time.time()
 	tasks = []
-	with tqdm.tqdm(total=int(max_rps * test_duration), desc="RPS Test", unit="req") as pbar:
+	with tqdm.tqdm(
+		total=int(max_rps * test_duration), desc="RPS Test", unit="req"
+	) as pbar:
 		for i in range(int(max_rps * test_duration)):
 			tasks.append(asyncio.create_task(users[i].simulate_request()))
 			await asyncio.sleep(1 / max_rps)
@@ -100,13 +105,22 @@ async def test_server_rps_limit(max_rps=8, test_duration=10):
 	print(f"Successful requests: {sum(success)}")
 	print(f"Failed requests: {failures}")
 	if durations:
-		print(f"Average request duration: {sum(durations)/len(durations):.4f} seconds")
+		print(
+			f"Average request duration: {sum(durations) / len(durations):.4f} seconds"
+		)
+
 
 def calculate_metric_stats():
 	with open("metrics.jsonl", "r") as f:
 		data = [json.loads(line) for line in f.readlines()]
 
-	metrics = ["app_attest_verification", "get_user", "create_user", "completion", "total"]
+	metrics = [
+		"app_attest_verification",
+		"get_user",
+		"create_user",
+		"completion",
+		"total",
+	]
 	averages = {}
 	counts = {m: 0 for m in metrics}
 	sums = {m: 0.0 for m in metrics}
@@ -129,8 +143,12 @@ def calculate_metric_stats():
 			averages[metric] = None
 
 	headers = ["Metric", "Average"]
-	table = [[metric, f"{averages[metric]:.4f}" if averages[metric] is not None else "N/A"] for metric in metrics]
+	table = [
+		[metric, f"{averages[metric]:.4f}" if averages[metric] is not None else "N/A"]
+		for metric in metrics
+	]
 	print(tabulate(table, headers=headers, tablefmt="grid"))
+
 
 if __name__ == "__main__":
 	asyncio.run(test_server_rps_limit(5, 20))
