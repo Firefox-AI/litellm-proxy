@@ -8,8 +8,6 @@ WIP
 
 1. `make`
 2. `source .venv/bin/activate`
-3. `pip install -r requirements-dev.txt`
-4. `pre-commit install`
 
 ### Lint
 
