@@ -16,7 +16,6 @@ repos:
           - '--fix=lf'
       - id: sort-simple-yaml
       - id: trailing-whitespace
-        exclude: \.ambr$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.14.0"
@@ -25,5 +24,4 @@ repos:
         args:
           - "--fix"
           - "--exit-non-zero-on-fix"
-        exclude: src/any_agent/vendor|demo
       - id: ruff-format
