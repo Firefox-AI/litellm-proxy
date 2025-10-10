@@ -1,3 +1,4 @@
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -31,8 +32,7 @@ class Env(BaseSettings):
 	MAX_COMPLETION_TOKENS: int = 1024
 	TOP_P: float = 0.01
 
-	class Config:
-		env_file = ".env"
+	model_config = ConfigDict(env_file=".env")
 
 
 env = Env()

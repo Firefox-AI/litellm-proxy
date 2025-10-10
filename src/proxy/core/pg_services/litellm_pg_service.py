@@ -6,6 +6,10 @@ from .pg_service import PGService
 
 
 class LiteLLMPGService(PGService):
+	"""
+	This service is primarily intended for updating user fields (directly via the DB) that are not supported by the free tier of LiteLLM.
+	"""
+
 	def __init__(self):
 		super().__init__(env.LITELLM_DB_NAME)
 
