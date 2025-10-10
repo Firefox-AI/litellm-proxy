@@ -38,8 +38,8 @@ async def authorize(
 			if data.get("error"):
 				raise HTTPException(status_code=400, detail=data["error"])
 			return AuthorizedChatRequest(
-				user=chat_request.key_id,
-				**chat_request.dict(
+				user=chat_request.key_id,  # "user" is key_id for app attest
+				**chat_request.model_dump(
 					exclude={"key_id", "challenge_b64", "assertion_obj_b64"}
 				),
 			)
@@ -50,7 +50,7 @@ async def authorize(
 				raise HTTPException(status_code=401, detail=fxa_user_id["error"])
 			return AuthorizedChatRequest(
 				user=fxa_user_id["user"],
-				**chat_request.dict(),
+				**chat_request.model_dump(),
 			)
 	raise HTTPException(
 		status_code=401, detail="Please authenticate with App Attest or FxA."
