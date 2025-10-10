@@ -1,7 +1,10 @@
 import time
 from typing import Annotated
-from fastapi import Header, APIRouter
+
+from fastapi import APIRouter, Header
+
 from fxa.oauth import Client
+
 from ...config import env
 from ...prometheus_metrics import PrometheusResult, metrics
 

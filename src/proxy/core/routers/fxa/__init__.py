@@ -1,4 +1,5 @@
-from .fxa import fxa_auth, router as fxa_router
+from .fxa import fxa_auth
+from .fxa import router as fxa_router
 
 __all__ = [
 	"fxa_auth",

@@ -25,8 +25,7 @@ class Env(BaseSettings):
 	CLIENT_ID: str = "default-client-id"
 	CLIENT_SECRET: str = "default-client-secret"
 
-	# LLM
-	SYSTEM_PROMPT: str = "You are a helpful assistant."
+	# LLM request default values
 	MODEL_NAME: str = "gpt-4"
 	TEMPERATURE: float = 0.1
 	MAX_COMPLETION_TOKENS: int = 1024

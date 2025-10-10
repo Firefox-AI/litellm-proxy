@@ -1,19 +1,21 @@
 import time
-import uvicorn
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, Header, Request, Response
-from fastapi.responses import StreamingResponse
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from typing import Annotated, Optional
-from .core.classes import AssertionRequest
+
+import uvicorn
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
+from fastapi.responses import StreamingResponse
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
+from .core.classes import AssertionRequest, AuthorizedChatRequest, ChatRequest
 from .core.config import env
 from .core.pg_services.services import app_attest_pg, litellm_pg
 from .core.prometheus_metrics import metrics
-from .core.routers.appattest import appattest_router, app_attest_auth
+from .core.routers.appattest import app_attest_auth, appattest_router
 from .core.routers.fxa import fxa_auth, fxa_router
 from .core.routers.health import health_router
 from .core.routers.user import user_router
-from .core.utils import get_completion, stream_completion, get_or_create_user
+from .core.utils import get_completion, get_or_create_user, stream_completion
 
 tags_metadata = [
 	{"name": "Health", "description": "Health check endpoints."},
@@ -27,35 +29,29 @@ tags_metadata = [
 
 
 async def authorize(
-	request_body: AssertionRequest,
+	chat_request: AssertionRequest | ChatRequest,
 	x_fxa_authorization: Annotated[str | None, Header()] = None,
-):
-	if (
-		request_body
-		and request_body.key_id
-		and request_body.challenge_b64
-		and request_body.assertion_obj_b64
-		and request_body.payload
-	):
-		data = await app_attest_auth(request_body)
+) -> AuthorizedChatRequest:
+	if isinstance(chat_request, AssertionRequest):
+		data = await app_attest_auth(chat_request)
 		if data:
 			if data.get("error"):
 				raise HTTPException(status_code=400, detail=data["error"])
-			return {
-				"user": request_body.key_id,
-				"payload": request_body.payload,
-				"stream": request_body.stream,
-			}
+			return AuthorizedChatRequest(
+				user=chat_request.key_id,
+				**chat_request.dict(
+					exclude={"key_id", "challenge_b64", "assertion_obj_b64"}
+				),
+			)
 	if x_fxa_authorization:
 		fxa_user_id = fxa_auth(x_fxa_authorization)
 		if fxa_user_id:
 			if fxa_user_id.get("error"):
 				raise HTTPException(status_code=401, detail=fxa_user_id["error"])
-			return {
-				**fxa_user_id,
-				"payload": request_body.payload,
-				"stream": request_body.stream,
-			}
+			return AuthorizedChatRequest(
+				user=fxa_user_id["user"],
+				**chat_request.dict(),
+			)
 	raise HTTPException(
 		status_code=401, detail="Please authenticate with App Attest or FxA."
 	)
@@ -122,14 +118,11 @@ app.include_router(user_router, prefix="/user")
 	description="Authorize first using App Attest or FxA. Either pass the x-fxa-authorization header or include the `{key_id, challenge, and assertion_obj}` in the request body for app attest authorization. `payload` is always required and contains the prompt.",
 )
 async def chat_completion(
-	auth_res: Annotated[Optional[dict], Depends(authorize)],
+	authorized_chat_request: Annotated[
+		Optional[AuthorizedChatRequest], Depends(authorize)
+	],
 ):
-	payload = auth_res.get("payload")
-	if not payload or not payload.get("text"):
-		raise HTTPException(
-			status_code=400, detail={"error": "Payload must include 'text' object"}
-		)
-	user_id = auth_res.get("user")
+	user_id = authorized_chat_request.user
 	if not user_id:
 		raise HTTPException(
 			status_code=400,
@@ -138,18 +131,14 @@ async def chat_completion(
 	user, _ = await get_or_create_user(user_id)
 	if user.get("blocked"):
 		raise HTTPException(status_code=403, detail={"error": "User is blocked."})
-	payload = auth_res.get("payload")
 
-	if auth_res.get("stream"):
+	if authorized_chat_request.stream:
 		return StreamingResponse(
-			stream_completion(auth_res["payload"]["text"], user["user_id"]),
+			stream_completion(authorized_chat_request),
 			media_type="text/event-stream",
 		)
 	else:
-		return await get_completion(
-			prompt=auth_res["payload"]["text"],
-			user_id=user["user_id"],
-		)
+		return await get_completion(authorized_chat_request)
 
 
 def main():

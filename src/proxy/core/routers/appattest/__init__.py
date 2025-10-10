@@ -1,10 +1,11 @@
 from .appattest import (
 	generate_client_challenge,
 	validate_challenge,
-	verify_attest,
 	verify_assert,
+	verify_attest,
 )
-from .middleware import router as appattest_router, app_attest_auth
+from .middleware import app_attest_auth
+from .middleware import router as appattest_router
 
 __all__ = [
 	"app_attest_auth",

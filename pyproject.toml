@@ -34,3 +34,6 @@ litellm-proxy = "proxy.run:main"
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "tab"
+
+[tool.ruff.lint]
+select = ["I"]
