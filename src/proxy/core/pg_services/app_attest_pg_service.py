@@ -12,9 +12,9 @@ class AppAttestPGService(PGService):
 			await self.pg.execute(
 				"""
 				INSERT INTO challenges (key_id, challenge)
-    			VALUES ($1, $2)
-    			ON CONFLICT (key_id) DO UPDATE SET
-        		challenge = EXCLUDED.challenge,
+				VALUES ($1, $2)
+				ON CONFLICT (key_id) DO UPDATE SET
+				challenge = EXCLUDED.challenge,
 				created_at = NOW()
 				""",
 				key_id,

@@ -43,7 +43,13 @@ async def app_attest_auth(request: AssertionRequest):
 	assertion_obj = b64decode_safe(request.assertion_obj_b64, "assertion_obj_b64")
 
 	try:
-		result = await verify_assert(request.key_id, assertion_obj, request.payload)
+		result = await verify_assert(
+			request.key_id,
+			assertion_obj,
+			request.model_dump(
+				exclude={"key_id", "challenge_b64", "assertion_obj_b64"}
+			),
+		)
 	except HTTPException:
 		return {"error": "Invalid App Attest auth"}
 	except Exception as e:

@@ -120,6 +120,13 @@ async def get_completion(authorized_chat_request: AuthorizedChatRequest):
 
 
 async def get_or_create_user(user_id: str):
+	"""Returns user info from LiteLLM, creating the user if they don't exist.
+	Args:
+		user_id (str): The user ID to look up or create.
+	Returns:
+		[user_info: dict, was_created: bool]
+	"""
+
 	async with httpx.AsyncClient() as client:
 		try:
 			params = {"end_user_id": user_id}
