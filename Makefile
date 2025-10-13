@@ -1,4 +1,4 @@
-PYTHON=python3
+PYTHON-VERSION=3.12
 VENV=.venv
 REQS=requirements.txt
 REQS-DEV=requirements-dev.txt
@@ -8,12 +8,16 @@ REQS-DEV=requirements-dev.txt
 all: setup
 
 setup:
-	$(PYTHON) -m venv $(VENV)
-	$(VENV)/bin/pip install --upgrade pip
-	$(VENV)/bin/pip install -r $(REQS)
-	$(VENV)/bin/pip install -r $(REQS-DEV)
-	$(VENV)/bin/pip install -e .
-	$(VENV)/bin/pre-commit install
+	uv venv --python $(PYTHON-VERSION)
+	uv pip install -r $(REQS)
+	uv pip install -r $(REQS-DEV)
+	uv run pre-commit install
+	@echo ""
+	@echo "✅ Setup complete! To activate your environment, run:"
+	@echo "   source .venv/bin/activate"
+
+install:
+	uv pip install --no-cache-dir -e .
 
 litellm-proxy:
 	$(VENV)/bin/litellm-proxy
