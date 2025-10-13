@@ -17,4 +17,5 @@ Ensure all the checks pass:
 
 ## Tests
 
-TBD
+Ensure all tests pass:
+`pytest -v`
