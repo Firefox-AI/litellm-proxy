@@ -17,8 +17,15 @@ This creates a virtual environment in `.venv/`, installs dependencies, and insta
 `docker compose -f litellm_docker_compose.yaml up -d`
 
 ### Run MLPA
+1. install it as a library
+```bash
+pip install --no-cache-dir -e .
+```
+2. Run the binary
 
-`litellm-proxy`
+```bash
+litellm-proxy
+```
 
 ## Config (see [LiteLLM Documentation](https://docs.litellm.ai/docs/simple_proxy_old_doc) for more config options)
 
