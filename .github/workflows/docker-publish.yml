@@ -7,8 +7,6 @@ on:
 
 env:
   COMPOSE_FILE: ./mlpa_docker_compose.yaml
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GAR_LOCATION: ${{ secrets.GAR_LOCATION }}
   GAR_REPOSITORY: mlpa
   SERVICE_NAME: mlpa
   IMAGE_NAME: mlpa
@@ -35,24 +33,17 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Google Artifact Registry
-        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev --quiet
+        run: gcloud auth configure-docker ${{ secrets.GAR_LOCATION }}-docker.pkg.dev --quiet
 
-      - name: Build the Docker image with Docker Compose
-        run: docker compose -f ${{ env.COMPOSE_FILE }} build ${{ env.SERVICE_NAME }}
-
-      - name: Tag the Docker image for GAR
+      - name: Build, Tag, and Push Docker image
         run: |
-          # The local image is named 'mlpa:latest' as defined in the compose file
-          LOCAL_IMAGE_TAG="${{ env.IMAGE_NAME }}:latest"
+          IMAGE_REPO="${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}"
+          IMAGE_TAG="${GITHUB_SHA::8}"
 
-          # The full name for the image in Google Artifact Registry
-          FULL_IMAGE_NAME="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest"
+          docker compose -f ${{ env.COMPOSE_FILE }} build ${{ env.SERVICE_NAME }}
 
-          echo "Tagging local image '$LOCAL_IMAGE_TAG' as '$FULL_IMAGE_NAME'"
-          docker tag $LOCAL_IMAGE_TAG $FULL_IMAGE_NAME
+          docker tag ${{ env.IMAGE_NAME }}:latest "${IMAGE_REPO}:${IMAGE_TAG}"
+          docker tag ${{ env.IMAGE_NAME }}:latest "${IMAGE_REPO}:latest"
 
-          echo "IMAGE_NAME=${FULL_IMAGE_NAME}" >> $GITHUB_ENV
+          docker push --all-tags "${IMAGE_REPO}"
         shell: bash
-
-      - name: Push the Docker image to Google Artifact Registry
-        run: docker push ${{ env.IMAGE_NAME }}
