@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-	title="LiteLLM Proxy",
+	title="MLPA",
 	description="A proxy to verify App Attest/FxA payloads and proxy requests through LiteLLM.",
 	version="1.0.0",
 	docs_url="/api/docs",

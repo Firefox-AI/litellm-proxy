@@ -19,8 +19,8 @@ setup:
 install:
 	uv pip install --no-cache-dir -e .
 
-litellm-proxy:
-	$(VENV)/bin/litellm-proxy
+mlpa:
+	$(VENV)/bin/mlpa
 
 
 clean:
