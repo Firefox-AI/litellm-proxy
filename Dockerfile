@@ -11,11 +11,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY . .
 
-# Install the package in editable mode to make the `litellm-proxy` executable available
+# Install the package in editable mode to make the `mlpa` executable available
 RUN pip install --no-cache-dir -e .
 
 # Expose the application port
 EXPOSE 8080
 
-# Run the litellm-proxy command using its full path inside the container
-CMD ["/usr/local/bin/litellm-proxy"]
+# Run the mlpa command using its full path inside the container
+CMD ["/usr/local/bin/mlpa"]

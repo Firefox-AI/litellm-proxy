@@ -3,7 +3,7 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "litellm-proxy"
+name = "mlpa"
 version = "0.1.0"
 description = "A proxy to verify App Attest/FxA payloads and proxy requests using LiteLLM virtual keys."
 authors = [
@@ -19,8 +19,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/firefox-ai/litellm-proxy"
-Issues = "https://github.com/firefox-ai/litellm-proxy/issues"
+Homepage = "https://github.com/firefox-ai/mlpa"
+Issues = "https://github.com/firefox-ai/mlpa/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -29,7 +29,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [project.scripts]
-litellm-proxy = "proxy.run:main"
+mlpa = "proxy.run:main"
 
 [tool.ruff.format]
 quote-style = "double"

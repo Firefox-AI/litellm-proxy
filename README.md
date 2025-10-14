@@ -17,14 +17,17 @@ This creates a virtual environment in `.venv/`, installs dependencies, and insta
 `docker compose -f litellm_docker_compose.yaml up -d`
 
 ### Run MLPA
+
 1. install it as a library
+
 ```bash
 pip install --no-cache-dir -e .
 ```
+
 2. Run the binary
 
 ```bash
-litellm-proxy
+mlpa
 ```
 
 ## Config (see [LiteLLM Documentation](https://docs.litellm.ai/docs/simple_proxy_old_doc) for more config options)
@@ -33,7 +36,7 @@ litellm-proxy
 
 ```
 MASTER_KEY="sk-1234..."
-LITELLM_API_BASE="http://litellm.proxy:4000"
+LITELLM_API_BASE="http://mlpa:4000"
 DATABASE_URL=postgresql://... # required for direct user editing in SQL
 CHALLENGE_EXPIRY_SECONDS=300
 PORT=8080
