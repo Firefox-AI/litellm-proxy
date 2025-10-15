@@ -15,7 +15,6 @@ class Env(BaseSettings):
 	LITELLM_DB_NAME: str = "litellm"
 	CHALLENGE_EXPIRY_SECONDS: int = 300  # 5 minutes
 	PORT: int | None = 8080
-	OPENAI_API_KEY: str | None = None
 
 	# App Attest
 	APP_BUNDLE_ID: str = "org.example.app"
@@ -31,6 +30,9 @@ class Env(BaseSettings):
 	TEMPERATURE: float = 0.1
 	MAX_COMPLETION_TOKENS: int = 1024
 	TOP_P: float = 0.01
+
+	# Sentry
+	SENTRY_DSN: str
 
 	model_config = ConfigDict(env_file=".env")
 

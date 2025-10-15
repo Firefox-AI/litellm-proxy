@@ -2,6 +2,7 @@ import time
 from contextlib import asynccontextmanager
 from typing import Annotated, Optional
 
+import sentry_sdk
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
@@ -65,6 +66,8 @@ async def lifespan(app: FastAPI):
 	await litellm_pg.disconnect()
 	await app_attest_pg.disconnect()
 
+
+sentry_sdk.init(dsn=env.SENTRY_DSN, send_default_pii=True)
 
 app = FastAPI(
 	title="MLPA",
