@@ -17,6 +17,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "sentry-sdk[fastapi]>=2.42.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/firefox-ai/mlpa"
