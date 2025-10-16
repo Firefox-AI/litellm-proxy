@@ -7,11 +7,12 @@ class Env(BaseSettings):
 	METRICS_LOG_FILE: str = "metrics.jsonl"
 
 	# PostgreSQL url (no /database)
-	PG_DB_URL: str = "postgresql://user:password@localhost:5432"
+	PG_DB_URL: str = "postgresql://litellm:litellm@localhost:5432"
 
 	# LiteLLM
 	MASTER_KEY: str = "sk-default"
-	LITELLM_API_BASE: str = "http://localhost:8000"
+	OPENAI_API_KEY: str = "sk-add-your-key"
+	LITELLM_API_BASE: str = "http://localhost:4000"
 	LITELLM_DB_NAME: str = "litellm"
 	CHALLENGE_EXPIRY_SECONDS: int = 300  # 5 minutes
 	PORT: int | None = 8080
@@ -19,7 +20,7 @@ class Env(BaseSettings):
 	# App Attest
 	APP_BUNDLE_ID: str = "org.example.app"
 	APP_DEVELOPMENT_TEAM: str = "TEAMID1234"
-	APP_ATTEST_DB_NAME: str = "keys"
+	APP_ATTEST_DB_NAME: str = "app_attest"
 
 	# FxA
 	CLIENT_ID: str = "default-client-id"
@@ -32,7 +33,7 @@ class Env(BaseSettings):
 	TOP_P: float = 0.01
 
 	# Sentry
-	SENTRY_DSN: str
+	SENTRY_DSN: str = ""
 
 	model_config = ConfigDict(env_file=".env")
 
