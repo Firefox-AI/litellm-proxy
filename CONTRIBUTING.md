@@ -123,7 +123,7 @@ curl --location 'http://localhost:4000/v1/chat/completions' \
 ```
 
 
-## FXA tokens and where to findd them
+## FXA tokens and where to find them
 MLPA is using [https://github.com/mozilla/PyFxA](https://github.com/mozilla/PyFxA) library for authentification with Mozilla account. Please follow quick start instructions in their [Readme](https://github.com/mozilla/PyFxA?tab=readme-ov-file#using-firefox-account-bearer-token-with-requests).
 
 Here is a quick snippet:
