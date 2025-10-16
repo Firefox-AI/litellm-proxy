@@ -35,6 +35,7 @@ services:
       - .env
     environment:
       PG_DB_URL: postgresql://litellm:litellm@postgres:5432/litellm
+      PORT: 4000
     command: ["--config", "/app/config.yaml"]
 
 volumes:
