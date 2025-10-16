@@ -31,4 +31,5 @@ jobs:
       - name: linters
         run: uv run pre-commit run --all-files --verbose
 
-      - run: pytest src/tests/unit -v
+      - name: unit tests
+        run: pytest src/tests/unit -v
