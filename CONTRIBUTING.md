@@ -37,7 +37,7 @@ or if you are using legacy docker-compose:
   docker-compose -f litellm_docker_compose.yaml up -d
   ```
 
-1. Create a second database that is needed for authentication
+2. Create a second database that is needed for authentication
 
   ```bash
   bash scripts/create-app-attest-database.sh
@@ -45,13 +45,13 @@ or if you are using legacy docker-compose:
 
 LiteLLM will be accessible at `localhost:4000` and `localhost:4000/ui`.
 
-1. Run MLPA with
+3. Run MLPA with
 
   ```bash
   mlpa
   ```
 
-1. Stop the service with
+4. Stop the service with
 
 ```bash
 docker compose -f litellm_docker_compose.yaml down
@@ -123,6 +123,7 @@ curl --location 'http://localhost:4000/v1/chat/completions' \
 ```
 
 ## FXA tokens and where to find them
+
 MLPA uses the [https://github.com/mozilla/PyFxA](https://github.com/mozilla/PyFxA) library for authentication with a Mozilla account. Please follow the quick-start instructions in their [README](https://github.com/mozilla/PyFxA?tab=readme-ov-file#using-firefox-account-bearer-token-with-requests).
 
 Here is a quick snippet:
