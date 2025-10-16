@@ -7,7 +7,7 @@ class Env(BaseSettings):
 	METRICS_LOG_FILE: str = "metrics.jsonl"
 
 	# PostgreSQL url (no /database)
-	PG_DB_URL: str = "postgresql://litellm:litellm@localhost:5432/litellm"
+	PG_DB_URL: str = "postgresql://litellm:litellm@localhost:5432"
 
 	# LiteLLM
 	MASTER_KEY: str = "sk-default"
@@ -20,7 +20,7 @@ class Env(BaseSettings):
 	# App Attest
 	APP_BUNDLE_ID: str = "org.example.app"
 	APP_DEVELOPMENT_TEAM: str = "TEAMID1234"
-	APP_ATTEST_DB_NAME: str = "keys"
+	APP_ATTEST_DB_NAME: str = "app_attest"
 
 	# FxA
 	CLIENT_ID: str = "default-client-id"
