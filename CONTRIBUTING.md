@@ -135,7 +135,7 @@ fxa_token: str = get_bearer_token(
     your_mozilla_account_email,
     your_mozilla_account_password,
     scopes=["profile"],
-    client_id=client_id,
+    client_id="5882386c6d801776" # a common client_id for dev environment,
     account_server_url="https://api.accounts.firefox.com",
     oauth_server_url="https://oauth.accounts.firefox.com",
 )
