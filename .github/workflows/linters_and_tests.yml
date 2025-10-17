@@ -17,19 +17,19 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.12
+          python-version: "3.12"
 
       - name: Install uv
         run: pip install uv
 
-      - name: Install requirements
+      - name: Sync dependencies
         run: |
-          uv pip install -r requirements-dev.txt --system
-          uv pip install -r requirements.txt --system
-          uv pip install -e . --system
+          uv venv
+          uv sync --all-groups
+          uv pip install --no-cache-dir -e .
 
-      - name: linters
+      - name: Run linters
         run: uv run pre-commit run --all-files --verbose
 
-      - name: unit tests
-        run: pytest src/tests/unit -v
+      - name: Run unit tests
+        run: uv run pytest src/tests/unit -v
