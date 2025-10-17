@@ -1,27 +1,29 @@
-PYTHON-VERSION=3.12
+PYTHON_VERSION=3.12
 VENV=.venv
-REQS=requirements.txt
-REQS-DEV=requirements-dev.txt
 
-.PHONY: all setup run clean qdrant-up
+.PHONY: all setup install lint test run clean
 
 all: setup
 
 setup:
-	uv venv --python $(PYTHON-VERSION)
-	uv pip install -r $(REQS)
-	uv pip install -r $(REQS-DEV)
+	uv venv --python $(PYTHON_VERSION)
+	uv sync --all-groups
 	uv run pre-commit install
 	@echo ""
 	@echo "✅ Setup complete! To activate your environment, run:"
-	@echo "   source .venv/bin/activate"
+	@echo "   source $(VENV)/bin/activate"
 
 install:
 	uv pip install --no-cache-dir -e .
 
+lint:
+	uv run ruff check .
+
+test:
+	uv run pytest -v
+
 mlpa:
 	$(VENV)/bin/mlpa
-
 
 clean:
 	rm -rf __pycache__ .cache $(VENV)

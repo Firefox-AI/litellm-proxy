@@ -6,9 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "mlpa"
 version = "0.1.0"
 description = "A proxy to verify App Attest/FxA payloads and proxy requests using LiteLLM virtual keys."
-authors = [
-    { name="Noah Podgurski", email="npodgurski@mozilla.com" }
-]
+authors = [{ name = "Noah Podgurski", email = "npodgurski@mozilla.com" }]
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
@@ -18,15 +16,42 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "sentry-sdk[fastapi]>=2.42.0",
+    "alembic==1.17.0",
+    "asyncpg==0.30.0",
+    "cbor2==5.7.0",
+    "cryptography==45.0.7",
+    "fastapi==0.119.0",
+    "httpx==0.28.1",
+    "mako==1.3.10",
+    "markupsafe==3.0.3",
+    "prometheus_client==0.23.1",
+    "pyattest==1.0.2",
+    "pydantic==2.11.7",
+    "pydantic_settings==2.10.1",
+    "PyFxA==0.8.1",
+    "PyJWT==2.10.1",
+    "pyhanko==0.16.0",
+    "python-dotenv==1.1.1",
+    "python_jose==3.4.0",
+    "sentry-sdk[fastapi]==2.42.0",
+    "sqlalchemy==2.0.44",
+    "tabulate==0.9.0",
+    "tiktoken==0.11.0",
+    "tqdm==4.67.1",
+    "uvicorn==0.35.0",
 ]
+
+[dependency-groups]
+test = ["pytest==8.4.2", "pytest-httpx==0.35.0", "pytest-mock==3.15.1"]
+lint = ["pre_commit==4.3.0", "ruff==0.14.0"]
+
 
 [project.urls]
 Homepage = "https://github.com/firefox-ai/mlpa"
 Issues = "https://github.com/firefox-ai/mlpa/issues"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
